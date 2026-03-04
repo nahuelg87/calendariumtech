@@ -23,14 +23,10 @@ jobs:
       - name: Build Astro Project
         run: npm run build
         env:
-          # Estas son las que cargaste en GitHub Secrets
+          # Usamos el nombre exacto que aparece en tu screenshot de GitHub Secrets
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
           
-          # Estas son las que Astro busca con el prefijo PUBLIC
+          # Mapeamos también las versiones PUBLIC por si el código las pide así
           PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          
-          # Por si tu código usa nombres más genéricos
-          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          PUBLIC_SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
