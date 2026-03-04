@@ -1,0 +1,58 @@
+---
+// src/layouts/MainLayout.astro
+import '../styles/global.css';
+import Footer from '../components/Footer.astro'; // <--- ESTA ES LA LÍNEA QUE FALTABA
+import Background from '../components/Background.astro'; // <--- Importa el fondo
+
+interface Props {
+    title: string;
+    description?: string;
+}
+
+const { title, description = "Calendario de eventos tech con estética minimalista" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="description" content={description} />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <title>{title} | Calendarium.tech</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    </head>
+    <body class="bg-transparent text-white font-sans antialiased flex flex-col min-h-screen relative">
+    <Background /> 
+	<div class="fixed inset-0 z-[100] pointer-events-none opacity-[0.2] bg-[url('https://www.transparenttextures.com/patterns/dust.png')]"></div>
+    
+    <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-12 relative z-10">
+        <slot />
+    </main>
+
+    <Footer />
+</body>
+</html>
+
+<style is:global>
+    :root {
+        --apple-radius: 2.5rem;
+    }
+    
+    /* Scrollbar minimalista */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #050505;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #222;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #333;
+    }
+</style>

@@ -1,0 +1,75 @@
+---
+/* src/components/Background.astro */
+---
+
+<div class="fixed inset-0 -z-10 overflow-hidden bg-[#050505]">
+  <div class="absolute inset-0 opacity-[0.25] bg-grid-pattern"></div>
+
+  <div class="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/20 rounded-full blur-[120px] animate-blob"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-yellow-500/15 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
+  <div class="absolute top-[20%] right-[10%] w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] animate-blob animation-delay-4000"></div>
+
+  <div class="absolute inset-0 bg-scanlines pointer-events-none opacity-[0.4]"></div>
+</div>
+
+<style>
+  /* Patrón de Grilla: Líneas blancas con más presencia */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(34, 211, 238, 0.90) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(34, 211, 238, 0.90) 1px, transparent 1px);
+    background-size: 60px 60px;
+
+    /* Agregamos una transición suave */
+    transition: opacity 0.5s ease;
+    
+    /* Usamos una variable para la opacidad (por defecto baja) */
+    opacity: var(--grid-opacity, 0.25);
+  }
+
+  /* Cuando pasamos el mouse por el contenedor de eventos, subimos la variable */
+  :global(#events-container:hover) ~ .bg-grid-pattern {
+    --grid-opacity: 0.6;
+  }
+
+  /* Animación de los Blobs */
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(40px, -60px) scale(1.1); }
+    66% { transform: translate(-30px, 30px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+
+  .animate-blob {
+    animation: blob 15s infinite ease-in-out;
+  }
+  .animation-delay-2000 { animation-delay: 2s; }
+  .animation-delay-4000 { animation-delay: 4s; }
+
+  /* Líneas de escaneo: Efecto monitor CRT */
+  .bg-scanlines {
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%, 
+      rgba(0, 0, 0, 0.25) 50%
+    ), 
+    linear-gradient(
+      90deg, 
+      rgba(255, 0, 0, 0.03), 
+      rgba(0, 255, 0, 0.01), 
+      rgba(0, 0, 255, 0.03)
+    );
+    background-size: 100% 4px, 3px 100%;
+  }
+
+  /* Animación de "respiración" para móviles */
+@media (max-width: 768px) {
+  .bg-grid-pattern {
+    animation: pulse-grid 8s infinite alternate ease-in-out;
+  }
+}
+
+@keyframes pulse-grid {
+  from { opacity: 0.2; }
+  to { opacity: 0.5; }
+}
+</style>

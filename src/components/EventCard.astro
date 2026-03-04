@@ -1,0 +1,190 @@
+---
+// src/components/EventCard.astro
+const { title, date, track, imageUrl, location, linkUrl } = Astro.props;
+const cleanImageUrl = imageUrl?.trim() || '';
+---
+
+<div data-card-track={track} class="event-card group reveal">
+  <img 
+    src={cleanImageUrl} 
+    alt={title}
+    class="card-image"
+  />
+  
+  <div class="card-content">
+    <div class="card-info">
+      <span class="track-tag">{track}</span>
+      <h3 class="card-title">{title}</h3>
+      <p class="card-meta">{date} • {location}</p>
+    </div>
+    
+    {linkUrl && (
+      <a href={linkUrl} target="_blank" class="btn-inscribirse">
+        Inscribirse
+      </a>
+    )}
+  </div>
+</div>
+
+<style>
+  /* --- 1. LÓGICA DE REVELADO (SCROLL) --- */
+  .reveal {
+    opacity: 0;
+    /* Arranca un poco más abajo y más chica */
+    transform: translateY(30px) scale(0.95);
+    transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: opacity, transform;
+  }
+
+  :global(.reveal.active) {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+  }
+
+  /* --- 2. ESTILO BASE Y EFECTO ZOOM (PC) --- */
+  .event-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2rem;
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    /* Transición suave para el zoom de la tarjeta */
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease, box-shadow 0.3s ease;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+  }
+
+  /* El efecto de Zoom al pasar el mouse */
+  .event-card:hover {
+    transform: scale(1.04) !important; /* Aumenta un 4% el tamaño */
+    border-color: rgba(34, 211, 238, 0.3); /* Ilumina el borde en cyan */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    z-index: 20; /* Asegura que la tarjeta que crece quede por encima de las otras */
+  }
+
+  /* --- 3. IMAGEN --- */
+  .card-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.2;
+    filter: grayscale(1) brightness(0.6);
+    transition: opacity 0.6s ease, filter 0.6s ease;
+  }
+
+  :global(.reveal.active) .card-image {
+    opacity: 0.5;
+    filter: grayscale(0.4) brightness(0.8);
+  }
+
+  .event-card:hover .card-image {
+    opacity: 1 !important;
+    filter: grayscale(0) brightness(1) !important;
+  }
+
+  /* --- 4. CONTENIDO --- */
+  .card-content {
+    position: relative;
+    z-index: 10;
+    padding: 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent 100%);
+    flex-grow: 1;
+    pointer-events: none; /* Evita que el contenido interfiera con el hover de la card */
+  }
+
+  .track-tag {
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.2em;
+    color: #22d3ee;
+    text-transform: uppercase;
+  }
+
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    line-height: 1.2;
+    margin: 0.25rem 0;
+  }
+
+  .card-meta {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* --- 5. BOTÓN (Aparece con la card) --- */
+  .btn-inscribirse {
+    pointer-events: auto; /* Reactivamos el click para el botón */
+    margin-top: 1.5rem;
+    background: #facc15;
+    color: black;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-style: italic;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    width: fit-content;
+    text-decoration: none;
+    display: inline-block;
+    
+    /* El botón ahora solo hace un fade in / pop cuando aparece la card */
+    transform: scale(0);
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+  }
+
+  :global(.reveal.active) .btn-inscribirse {
+    transform: scale(1);
+  }
+
+  .btn-inscribirse:hover {
+    background-color: white;
+  }
+
+  /* --- 6. MODO LISTA --- */
+  :global(#events-container.flex-col) .event-card {
+    min-height: 90px !important;
+    height: 90px !important;
+    border-radius: 1rem !important;
+    margin-bottom: 0.75rem;
+    flex-direction: row !important;
+  }
+
+  /* Desactivamos el zoom en modo lista para que no se pisen */
+  :global(#events-container.flex-col) .event-card:hover {
+    transform: scale(1.01) !important;
+  }
+
+  :global(#events-container.flex-col) .card-image {
+    position: relative !important;
+    width: 70px !important;
+    height: 70px !important;
+    margin: 10px;
+    border-radius: 8px;
+    opacity: 1 !important;
+    filter: grayscale(0) !important;
+  }
+
+  :global(#events-container.flex-col) .card-content {
+    background: none !important;
+    padding: 0 1.5rem 0 0 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 90px !important;
+  }
+
+  :global(#events-container.flex-col) .btn-inscribirse {
+    margin-top: 0 !important;
+    transform: scale(1) !important;
+  }
+</style>
