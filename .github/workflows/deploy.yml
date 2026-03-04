@@ -21,11 +21,13 @@ jobs:
         run: npm install
 
       - name: Build Astro Project
-        # Inyectamos las variables de Supabase para que el build genere las páginas
+        # Inyectamos las variables mapeándolas a lo que Astro suele buscar
         run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Deploy to Netlify
         uses: netlify/actions/cli@master
