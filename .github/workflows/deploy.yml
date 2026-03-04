@@ -29,11 +29,8 @@ jobs:
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Deploy to Netlify
-        uses: netlify/actions/cli@master
-        with:
-          # --dir=dist es la carpeta que genera Astro al buildear
-          # --prod lo manda a la URL principal (producción)
-          args: deploy --dir=dist --prod
+        # Usamos npx para correr el CLI directamente sobre lo que ya buildeamos
+        run: npx netlify-cli deploy --dir=dist --prod
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
