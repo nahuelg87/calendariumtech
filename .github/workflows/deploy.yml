@@ -2,7 +2,7 @@ name: Deploy to Netlify 🚀
 
 on:
   push:
-    branches: [ main ] # Se dispara al subir cambios a la rama principal
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
@@ -23,10 +23,17 @@ jobs:
       - name: Build Astro Project
         run: npm run build
         env:
-          # Usamos el nombre exacto que aparece en tu screenshot de GitHub Secrets
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
-          
-          # Mapeamos también las versiones PUBLIC por si el código las pide así
           PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Deploy to Netlify
+        uses: netlify/actions/cli@master
+        with:
+          # --dir=dist es la carpeta que genera Astro al buildear
+          # --prod lo manda a la URL principal (producción)
+          args: deploy --dir=dist --prod
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
