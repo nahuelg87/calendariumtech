@@ -21,20 +21,16 @@ jobs:
         run: npm install
 
       - name: Build Astro Project
-        # Inyectamos las variables mapeándolas a lo que Astro suele buscar
         run: npm run build
         env:
+          # Estas son las que cargaste en GitHub Secrets
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          
+          # Estas son las que Astro busca con el prefijo PUBLIC
           PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-
-      - name: Deploy to Netlify
-        uses: netlify/actions/cli@master
-        with:
-          # --dir=dist es donde Astro guarda los archivos listos
-          # --prod le dice que es el despliegue final
-          args: deploy --dir=dist --prod
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          
+          # Por si tu código usa nombres más genéricos
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          PUBLIC_SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
