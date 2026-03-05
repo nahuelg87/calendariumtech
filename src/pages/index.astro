@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import EventCard from '../components/EventCard.astro';
+// Eliminamos HeroCube e importamos solo Hero3D
 import Hero3D from '../components/Hero3D.jsx';
 import { supabase } from '../lib/supabase';
 
@@ -14,8 +15,8 @@ const { data: tracks } = await supabase
 const { data: events, error } = await supabase
   .from('events')
   .select('*')
-  .order('is_featured', { ascending: false })
-  .order('date', { ascending: true });
+  .order('is_featured', { ascending: false }) // Destacados arriba
+  .order('date', { ascending: true });        // El más próximo primero
 
 if (error) {
   console.error("Error de SysAdmin en Supabase:", error.message);
@@ -79,12 +80,13 @@ if (error) {
     class="group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10"
   >
     {events?.map(event => {
+      // Generamos el slug: "Nerdearla 2026" -> "nerdearla-2026"
       const eventId = event.title
         .toLowerCase()
-        .normalize("NFD")
+        .normalize("NFD") // Quita tildes
         .replace(/[\u0300-\u036f]/g, "") 
-        .replace(/\s+/g, '-') 
-        .replace(/[^\w\-]+/g, '');
+        .replace(/\s+/g, '-') // Espacios por guiones
+        .replace(/[^\w\-]+/g, ''); // Quita caracteres raros
 
       return (
         <div id={eventId} class="scroll-mt-28"> 
@@ -115,9 +117,12 @@ if (error) {
     
     if (!container || !sidebar || !overlay) return;
 
+    // Lógica mejorada para mobile (evita problemas de eventos táctiles)
     const toggleSidebar = (e: Event) => {
       if (e) e.preventDefault();
+      
       const isOpen = !sidebar.classList.contains('translate-x-full');
+      
       if (isOpen) {
         sidebar.classList.add('translate-x-full');
         overlay.classList.add('opacity-0', 'pointer-events-none');
@@ -143,28 +148,32 @@ if (error) {
     }, { threshold: 0.1 });
 
     const allCards = container.querySelectorAll('.event-card');
-    const allWrappers = container.querySelectorAll('.scroll-mt-28');
-    allWrappers.forEach(wrapper => observer.observe(wrapper));
+    allCards.forEach(card => observer.observe(card));
 
     const filterButtons = document.querySelectorAll('.filter-btn');
+    
     filterButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const selectedTrack = btn.getAttribute('data-track');
-        allWrappers.forEach(wrapper => {
-          const htmlWrapper = wrapper as HTMLElement;
-          const card = htmlWrapper.querySelector('.event-card') as HTMLElement;
-          const cardTrack = card.getAttribute('data-card-track') || card.getAttribute('data-track');
+        
+        allCards.forEach(card => {
+          const htmlCard = card as HTMLElement;
+          const cardTrack = htmlCard.getAttribute('data-card-track') || htmlCard.getAttribute('data-track');
 
           if (selectedTrack === 'all' || cardTrack === selectedTrack) {
-            htmlWrapper.style.display = 'block';
-            setTimeout(() => htmlWrapper.classList.add('active'), 10);
+            htmlCard.style.display = 'flex';
+            setTimeout(() => htmlCard.classList.add('active'), 10);
           } else {
-            htmlWrapper.style.display = 'none';
+            htmlCard.style.display = 'none';
           }
+
+          
         });
 
+        // Cerramos el sidebar usando la lógica centralizada
         sidebar.classList.add('translate-x-full');
         overlay.classList.add('opacity-0', 'pointer-events-none');
+        overlay.classList.remove('opacity-100', 'pointer-events-auto');
       });
     });
 
@@ -183,27 +192,10 @@ if (error) {
       listBtn?.classList.remove('bg-white/10', 'text-white');
       listBtn?.classList.add('text-white/20');
     });
-
-    // --- LÓGICA DE SCROLL AL HASH ---
-    const hash = window.location.hash;
-    if (hash) {
-      setTimeout(() => {
-        try {
-          const target = document.querySelector(decodeURIComponent(hash));
-          if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            target.classList.add('active');
-            const cardInner = target.querySelector('.event-card');
-            if (cardInner) cardInner.classList.add('active');
-          }
-        } catch (e) {
-          console.error("Hash inválido:", e);
-        }
-      }, 600); 
-    }
   }
 
   init();
   document.addEventListener('astro:after-swap', init);
   document.addEventListener('astro:page-load', init);
+  
 </script>
