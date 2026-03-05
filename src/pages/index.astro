@@ -1,7 +1,8 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import EventCard from '../components/EventCard.astro';
-import HeroCube from '../components/HeroCube.jsx';
+// Eliminamos HeroCube e importamos solo Hero3D
+import Hero3D from '../components/Hero3D.jsx';
 import { supabase } from '../lib/supabase';
 
 // 1. Traemos los datos de Supabase
@@ -9,13 +10,14 @@ const { data: events } = await supabase.from('events').select('*').order('date',
 const { data: tracks } = await supabase.from('tracks').select('name').order('name', { ascending: true });
 ---
 
-<MainLayout title="Eventos TechXXX">
+<MainLayout title="Eventos Tech">
   <section class="flex flex-col md:flex-row items-center justify-center pt-6 pb-8 gap-4 md:gap-12">
     <h1 class="text-4xl md:text-7xl lg:text-8xl font-black italic uppercase tracking-tighter leading-none text-center md:text-left text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">
       Calendarium<span class="text-yellow-400">.tech</span>
     </h1>
-    <div class="w-40 h-40 md:w-64 md:h-64 flex items-center justify-center">
-      <HeroCube client:load />
+    
+    <div class="w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+      <Hero3D client:load />
     </div>
   </section>
 
@@ -89,7 +91,6 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
     
     if (!container) return;
 
-    // --- 1. LÓGICA DE SIDEBAR ---
     const toggleSidebar = () => {
       sidebar?.classList.toggle('translate-x-full');
       overlay?.classList.toggle('opacity-100');
@@ -102,7 +103,6 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
     closeBtn?.addEventListener('click', toggleSidebar);
     overlay?.addEventListener('click', toggleSidebar);
 
-    // --- 2. LÓGICA DE REVELADO (Intersection Observer) ---
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -115,7 +115,6 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
     const allCards = container.querySelectorAll('.event-card');
     allCards.forEach(card => observer.observe(card));
 
-    // --- 3. LÓGICA DE FILTRADO (Ajustada al atributo correcto) ---
     const filterButtons = document.querySelectorAll('.filter-btn');
     
     filterButtons.forEach(btn => {
@@ -124,8 +123,6 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
         
         allCards.forEach(card => {
           const htmlCard = card as HTMLElement;
-          // IMPORTANTE: Tu EventCard usa 'data-card-track' o 'data-track'
-          // Ajustamos para que busque ambos por las dudas
           const cardTrack = htmlCard.getAttribute('data-card-track') || htmlCard.getAttribute('data-track');
 
           if (selectedTrack === 'all' || cardTrack === selectedTrack) {
@@ -140,7 +137,6 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
       });
     });
 
-    // --- 4. CAMBIO DE VISTA ---
     listBtn?.addEventListener('click', () => {
       container.className = "group flex flex-col gap-3 relative z-10";
       listBtn.classList.add('bg-white/10', 'text-white');
@@ -158,7 +154,6 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
     });
   }
 
-  // Ejecución
   init();
   document.addEventListener('astro:after-swap', init);
   document.addEventListener('astro:page-load', init);
