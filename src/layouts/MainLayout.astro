@@ -20,7 +20,8 @@ const { title, description = "Calendario de eventos tech con estética minimalis
         <meta name="description" content={description} />
         <meta name="viewport" content="width=device-width" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <title>{title} | Calendarium.tech</title>
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <title>Calendarium.tech | {title}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
@@ -28,7 +29,6 @@ const { title, description = "Calendario de eventos tech con estética minimalis
     <body class="bg-transparent text-white font-sans antialiased flex flex-col min-h-screen relative">
     
     <Background /> 
-    <div class="fixed inset-0 z-[100] pointer-events-none opacity-[0.2] bg-[url('https://www.transparenttextures.com/patterns/dust.png')]"></div>
     
     <Navbar />
 

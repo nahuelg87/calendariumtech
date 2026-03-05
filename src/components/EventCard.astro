@@ -1,33 +1,51 @@
 ---
 // src/components/EventCard.astro
-const { title, date, track, imageUrl, location, linkUrl } = Astro.props;
+const { title, date, track, imageUrl, location, linkUrl, is_featured } = Astro.props;
 
-// 1. Leemos el nombre del .env
+// 1. Lógica de Fecha (Comparación y Formateo)
+// Agregamos T00:00:00 para evitar que la zona horaria te mueva el día
+const fechaEvento = new Date(date + 'T00:00:00');
+const hoy = new Date();
+hoy.setHours(0, 0, 0, 0); 
+
+const estaFinalizado = fechaEvento < hoy;
+
+// Formateo para mostrar en la card (Ej: 20 oct 2026)
+const fechaFormateada = fechaEvento.toLocaleDateString('es-AR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric'
+}).replace('.', '');
+
+// 2. Configuración de Cloudinary (Variables de entorno)
 const CLOUD_NAME = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
 
-// 2. Función de optimización (sin tocar el HTML/CSS)
 const getOptimizedImage = (url: string) => {
   const cleanUrl = url?.trim() || '';
-  if (!cleanUrl) return 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1000&auto=format&fit=crop'; // Placeholder
+  if (!cleanUrl) return 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1000&auto=format&fit=crop';
   
-  // Si no hay variable de entorno, devolvemos la url original
+  if (cleanUrl.startsWith('data:image')) return cleanUrl;
   if (!CLOUD_NAME) return cleanUrl;
 
   const transformations = "w_800,c_fill,g_auto,f_auto,q_auto";
 
-  // Si ya es de Cloudinary
   if (cleanUrl.includes('cloudinary.com')) {
     return cleanUrl.replace('/upload/', `/upload/${transformations}/`);
   }
 
-  // Proxy Fetch para imágenes externas
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(cleanUrl)}`;
 };
 
 const optimizedUrl = getOptimizedImage(imageUrl);
 ---
 
-<div data-card-track={track} class="event-card group reveal">
+<div 
+  data-card-track={track} 
+  class={`event-card group reveal ${is_featured ? 'featured' : ''} ${estaFinalizado ? 'is-past' : ''}`}
+>
+  {is_featured && !estaFinalizado && <span class="featured-badge">DESTACADO</span>}
+  {estaFinalizado && <span class="past-badge">FINALIZADO</span>}
+
   <img 
     src={optimizedUrl} 
     alt={title}
@@ -39,19 +57,29 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     <div class="card-info">
       <span class="track-tag">{track}</span>
       <h3 class="card-title">{title}</h3>
-      <p class="card-meta">{date} • {location}</p>
+      <p class="card-meta">{fechaFormateada} • {location}</p>
     </div>
     
-    {linkUrl && (
-      <a href={linkUrl} target="_blank" class="btn-inscribirse">
-        Inscribirse
-      </a>
-    )}
+    <div class="btn-container">
+      {estaFinalizado ? (
+        <button class="btn-inscribirse btn-finalizado" disabled>
+          Finalizado
+        </button>
+      ) : linkUrl ? (
+        <a href={linkUrl} target="_blank" class="btn-inscribirse">
+          Inscribirse
+        </a>
+      ) : (
+        <button class="btn-inscribirse btn-disabled" disabled>
+          Próximamente
+        </button>
+      )}
+    </div>
   </div>
 </div>
 
 <style>
-  /* --- 1. LÓGICA DE REVELADO (SCROLL) --- */
+  /* --- 1. LÓGICA DE REVELADO --- */
   .reveal {
     opacity: 0;
     transform: translateY(30px) scale(0.95);
@@ -64,7 +92,7 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     transform: translateY(0) scale(1) !important;
   }
 
-  /* --- 2. ESTILO BASE Y EFECTO ZOOM (PC) --- */
+  /* --- 2. ESTILO BASE Y DESTACADOS --- */
   .event-card {
     position: relative;
     overflow: hidden;
@@ -78,6 +106,11 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     z-index: 1;
   }
 
+  .event-card.featured {
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    background: linear-gradient(145deg, #111 0%, #1a1a05 100%);
+  }
+
   .event-card:hover {
     transform: scale(1.04) !important;
     border-color: rgba(34, 211, 238, 0.3);
@@ -85,7 +118,12 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     z-index: 20;
   }
 
-  /* --- 3. IMAGEN --- */
+  .event-card.featured:hover {
+    border-color: #facc15;
+    box-shadow: 0 10px 30px rgba(250, 204, 21, 0.1);
+  }
+
+  /* --- 3. IMAGEN Y ESTADOS --- */
   .card-image {
     position: absolute;
     inset: 0;
@@ -107,7 +145,13 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     filter: grayscale(0) brightness(1) !important;
   }
 
-  /* --- 4. CONTENIDO --- */
+  /* Opacidad para eventos pasados */
+  .event-card.is-past {
+    filter: grayscale(1);
+    opacity: 0.6;
+  }
+
+  /* --- 4. CONTENIDO Y BADGES --- */
   .card-content {
     position: relative;
     z-index: 10;
@@ -142,7 +186,22 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     color: rgba(255, 255, 255, 0.5);
   }
 
-  /* --- 5. BOTÓN --- */
+  .featured-badge, .past-badge {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 0.5rem;
+    z-index: 30;
+    letter-spacing: 1px;
+  }
+
+  .featured-badge { background: #facc15; color: black; }
+  .past-badge { background: #333; color: #888; }
+
+  /* --- 5. BOTONES (ESTADOS) --- */
   .btn-inscribirse {
     pointer-events: auto;
     margin-top: 1.5rem;
@@ -165,7 +224,21 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     transform: scale(1);
   }
 
-  .btn-inscribirse:hover {
+  .btn-disabled {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.3) !important;
+    cursor: not-allowed;
+  }
+
+  .btn-finalizado {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+
+  .btn-inscribirse:hover:not(:disabled) {
     background-color: white;
   }
 
@@ -176,10 +249,6 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     border-radius: 1rem !important;
     margin-bottom: 0.75rem;
     flex-direction: row !important;
-  }
-
-  :global(#events-container.flex-col) .event-card:hover {
-    transform: scale(1.01) !important;
   }
 
   :global(#events-container.flex-col) .card-image {

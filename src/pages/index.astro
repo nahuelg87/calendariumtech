@@ -5,9 +5,22 @@ import EventCard from '../components/EventCard.astro';
 import Hero3D from '../components/Hero3D.jsx';
 import { supabase } from '../lib/supabase';
 
-// 1. Traemos los datos de Supabase
-const { data: events } = await supabase.from('events').select('*').order('date', { ascending: true });
-const { data: tracks } = await supabase.from('tracks').select('name').order('name', { ascending: true });
+// 1. Traemos los Tracks (para los filtros)
+const { data: tracks } = await supabase
+  .from('tracks')
+  .select('name')
+  .order('name', { ascending: true });
+
+// 2. Traemos los Eventos (con el orden de destacados y fecha)
+const { data: events, error } = await supabase
+  .from('events')
+  .select('*')
+  .order('is_featured', { ascending: false }) // Destacados arriba
+  .order('date', { ascending: true });        // El más próximo primero
+
+if (error) {
+  console.error("Error de SysAdmin en Supabase:", error.message);
+}
 ---
 
 <MainLayout title="Eventos Tech">
@@ -74,6 +87,7 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
         location={event.location}
         imageUrl={event.image_url} 
         linkUrl={event.link_url}
+        is_featured={event.is_featured}
       />
     ))}
   </main>
