@@ -1,14 +1,38 @@
 ---
 // src/components/EventCard.astro
 const { title, date, track, imageUrl, location, linkUrl } = Astro.props;
-const cleanImageUrl = imageUrl?.trim() || '';
+
+// 1. Leemos el nombre del .env
+const CLOUD_NAME = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
+
+// 2. Función de optimización (sin tocar el HTML/CSS)
+const getOptimizedImage = (url: string) => {
+  const cleanUrl = url?.trim() || '';
+  if (!cleanUrl) return 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1000&auto=format&fit=crop'; // Placeholder
+  
+  // Si no hay variable de entorno, devolvemos la url original
+  if (!CLOUD_NAME) return cleanUrl;
+
+  const transformations = "w_800,c_fill,g_auto,f_auto,q_auto";
+
+  // Si ya es de Cloudinary
+  if (cleanUrl.includes('cloudinary.com')) {
+    return cleanUrl.replace('/upload/', `/upload/${transformations}/`);
+  }
+
+  // Proxy Fetch para imágenes externas
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(cleanUrl)}`;
+};
+
+const optimizedUrl = getOptimizedImage(imageUrl);
 ---
 
 <div data-card-track={track} class="event-card group reveal">
   <img 
-    src={cleanImageUrl} 
+    src={optimizedUrl} 
     alt={title}
     class="card-image"
+    loading="lazy"
   />
   
   <div class="card-content">
@@ -30,7 +54,6 @@ const cleanImageUrl = imageUrl?.trim() || '';
   /* --- 1. LÓGICA DE REVELADO (SCROLL) --- */
   .reveal {
     opacity: 0;
-    /* Arranca un poco más abajo y más chica */
     transform: translateY(30px) scale(0.95);
     transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
     will-change: opacity, transform;
@@ -48,7 +71,6 @@ const cleanImageUrl = imageUrl?.trim() || '';
     border-radius: 2rem;
     background: #111;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    /* Transición suave para el zoom de la tarjeta */
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease, box-shadow 0.3s ease;
     min-height: 400px;
     display: flex;
@@ -56,12 +78,11 @@ const cleanImageUrl = imageUrl?.trim() || '';
     z-index: 1;
   }
 
-  /* El efecto de Zoom al pasar el mouse */
   .event-card:hover {
-    transform: scale(1.04) !important; /* Aumenta un 4% el tamaño */
-    border-color: rgba(34, 211, 238, 0.3); /* Ilumina el borde en cyan */
+    transform: scale(1.04) !important;
+    border-color: rgba(34, 211, 238, 0.3);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-    z-index: 20; /* Asegura que la tarjeta que crece quede por encima de las otras */
+    z-index: 20;
   }
 
   /* --- 3. IMAGEN --- */
@@ -97,7 +118,7 @@ const cleanImageUrl = imageUrl?.trim() || '';
     justify-content: flex-end;
     background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent 100%);
     flex-grow: 1;
-    pointer-events: none; /* Evita que el contenido interfiera con el hover de la card */
+    pointer-events: none;
   }
 
   .track-tag {
@@ -121,9 +142,9 @@ const cleanImageUrl = imageUrl?.trim() || '';
     color: rgba(255, 255, 255, 0.5);
   }
 
-  /* --- 5. BOTÓN (Aparece con la card) --- */
+  /* --- 5. BOTÓN --- */
   .btn-inscribirse {
-    pointer-events: auto; /* Reactivamos el click para el botón */
+    pointer-events: auto;
     margin-top: 1.5rem;
     background: #facc15;
     color: black;
@@ -136,8 +157,6 @@ const cleanImageUrl = imageUrl?.trim() || '';
     width: fit-content;
     text-decoration: none;
     display: inline-block;
-    
-    /* El botón ahora solo hace un fade in / pop cuando aparece la card */
     transform: scale(0);
     transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
   }
@@ -159,7 +178,6 @@ const cleanImageUrl = imageUrl?.trim() || '';
     flex-direction: row !important;
   }
 
-  /* Desactivamos el zoom en modo lista para que no se pisen */
   :global(#events-container.flex-col) .event-card:hover {
     transform: scale(1.01) !important;
   }
