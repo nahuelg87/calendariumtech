@@ -24,7 +24,7 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
   <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
 
   <nav class="flex justify-center md:justify-between items-center mb-8 gap-8">
-    <button id="open-filters" class="group flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full hover:bg-white hover:text-black transition-all duration-500 text-xs font-black uppercase italic tracking-[0.2em]">
+    <button id="open-filters" class="group flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full hover:bg-white hover:text-black transition-all duration-500 text-xs font-black uppercase italic tracking-[0.2em] relative z-20">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 3H2l8 9v7l4 3v-10L22 3z"/></svg>
       Filtros
     </button>
@@ -39,7 +39,7 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
     </div>
   </nav>
 
-  <aside id="filter-sidebar" class="fixed inset-y-0 right-0 w-72 bg-black/95 backdrop-blur-3xl border-l border-white/10 z-50 translate-x-full transition-transform duration-500">
+  <aside id="filter-sidebar" class="fixed inset-y-0 right-0 w-72 bg-black/95 backdrop-blur-3xl border-l border-white/10 z-[200] translate-x-full transition-transform duration-500">
     <div class="p-8 h-full flex flex-col">
       <div class="flex justify-between items-center mb-8">
         <h2 class="text-2xl font-black italic uppercase tracking-tighter">Tracks</h2>
@@ -60,7 +60,7 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
     </div>
   </aside>
 
-  <div id="sidebar-overlay" class="fixed inset-0 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-500 z-40"></div>
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-500 z-[150]"></div>
   
   <main 
     id="events-container" 
@@ -89,14 +89,23 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
     const gridBtn = document.getElementById('grid-btn');
     const listBtn = document.getElementById('list-btn');
     
-    if (!container) return;
+    if (!container || !sidebar || !overlay) return;
 
-    const toggleSidebar = () => {
-      sidebar?.classList.toggle('translate-x-full');
-      overlay?.classList.toggle('opacity-100');
-      overlay?.classList.toggle('pointer-events-auto');
-      overlay?.classList.toggle('opacity-0');
-      overlay?.classList.toggle('pointer-events-none');
+    // Lógica mejorada para mobile (evita problemas de eventos táctiles)
+    const toggleSidebar = (e: Event) => {
+      if (e) e.preventDefault();
+      
+      const isOpen = !sidebar.classList.contains('translate-x-full');
+      
+      if (isOpen) {
+        sidebar.classList.add('translate-x-full');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        overlay.classList.remove('opacity-100', 'pointer-events-auto');
+      } else {
+        sidebar.classList.remove('translate-x-full');
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        overlay.classList.add('opacity-100', 'pointer-events-auto');
+      }
     };
 
     openBtn?.addEventListener('click', toggleSidebar);
@@ -133,7 +142,10 @@ const { data: tracks } = await supabase.from('tracks').select('name').order('nam
           }
         });
 
-        toggleSidebar();
+        // Cerramos el sidebar usando la lógica centralizada
+        sidebar.classList.add('translate-x-full');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        overlay.classList.remove('opacity-100', 'pointer-events-auto');
       });
     });
 

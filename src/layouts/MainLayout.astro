@@ -1,8 +1,9 @@
 ---
 // src/layouts/MainLayout.astro
 import '../styles/global.css';
-import Footer from '../components/Footer.astro'; // <--- ESTA ES LA LÍNEA QUE FALTABA
-import Background from '../components/Background.astro'; // <--- Importa el fondo
+import Navbar from '../components/Navbar.astro'; // <--- IMPORTADO
+import Footer from '../components/Footer.astro';
+import Background from '../components/Background.astro';
 
 interface Props {
     title: string;
@@ -25,9 +26,12 @@ const { title, description = "Calendario de eventos tech con estética minimalis
         <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     </head>
     <body class="bg-transparent text-white font-sans antialiased flex flex-col min-h-screen relative">
-    <Background /> 
-	<div class="fixed inset-0 z-[100] pointer-events-none opacity-[0.2] bg-[url('https://www.transparenttextures.com/patterns/dust.png')]"></div>
     
+    <Background /> 
+    <div class="fixed inset-0 z-[100] pointer-events-none opacity-[0.2] bg-[url('https://www.transparenttextures.com/patterns/dust.png')]"></div>
+    
+    <Navbar />
+
     <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-12 relative z-10">
         <slot />
     </main>
