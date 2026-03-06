@@ -14,16 +14,25 @@ const fechaFormateada = fechaEvento.toLocaleDateString('es-AR', {
   year: 'numeric'
 }).replace('.', '');
 
-// 2. Lógica de Calendario (URLs Dinámicas y Archivo .ics)
+// 2. Lógica de Slug, Deep Link y Compartir
+const eventSlug = title
+  .toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "") 
+  .replace(/\s+/g, '-') 
+  .replace(/[^\w\-]+/g, '');
+
+const fullShareUrl = `https://calendarium.tech/#${eventSlug}`;
+
+// 3. Lógica de Calendarios (URLs Dinámicas y Archivo .ics)
 const encodedTitle = encodeURIComponent(`[Calendarium.tech] ${title}`);
-const encodedDesc = encodeURIComponent(`Evento: ${title}\nTrack: ${track}\nUbicación: ${location}\nLink: ${linkUrl}`);
+const encodedDesc = encodeURIComponent(`Evento: ${title}\nTrack: ${track}\nLink: ${linkUrl}`);
 const encodedLoc = encodeURIComponent(location);
 const gDate = date.replace(/-/g, '');
 
 const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodedTitle}&dates=${gDate}/${gDate}&details=${encodedDesc}&location=${encodedLoc}`;
 const outlookUrl = `https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${encodedTitle}&startdt=${date}&enddt=${date}&body=${encodedDesc}&location=${encodedLoc}`;
 
-// GENERACIÓN DE ARCHIVO .ICS (Para Mobile App Integration)
 const icsContent = [
   'BEGIN:VCALENDAR',
   'VERSION:2.0',
@@ -36,10 +45,9 @@ const icsContent = [
   'END:VEVENT',
   'END:VCALENDAR'
 ].join('\n');
-
 const icsUrl = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
 
-// 3. Configuración de Cloudinary
+// 4. Configuración de Cloudinary
 const CLOUD_NAME = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
 const getOptimizedImage = (url: string) => {
   const cleanUrl = url?.trim() || '';
@@ -73,21 +81,31 @@ const optimizedUrl = getOptimizedImage(imageUrl);
       {estaFinalizado ? (
         <button class="btn-inscribirse btn-finalizado" disabled>Finalizado</button>
       ) : (
-        <div class="flex gap-3 items-center pointer-events-auto">
+        <div class="flex gap-2 items-center pointer-events-auto">
           {linkUrl ? (
             <a href={linkUrl} target="_blank" class="btn-inscribirse">Inscribirse</a>
           ) : (
             <button class="btn-inscribirse btn-disabled" disabled>Próximamente</button>
           )}
           
+          <button 
+            class="btn-utility" 
+            title="Compartir evento"
+            onclick={`
+              if (navigator.share) {
+                navigator.share({ title: '${title}', text: 'Mirá este evento:', url: '${fullShareUrl}' });
+              } else {
+                navigator.clipboard.writeText('${fullShareUrl}');
+                alert('¡Link copiado!');
+              }
+            `}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </button>
+
           <div class="calendar-dropdown">
-            <button class="btn-calendar" title="Agendar en mi calendario">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
+            <button class="btn-utility" title="Agendar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             </button>
             <div class="calendar-menu">
               <a href={googleUrl} target="_blank">Google Calendar</a>
@@ -102,30 +120,12 @@ const optimizedUrl = getOptimizedImage(imageUrl);
 </div>
 
 <style>
-  /* --- 1. LÓGICA DE REVELADO --- */
-  .reveal {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-    transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  :global(.reveal.active) {
-    opacity: 1 !important;
-    transform: translateY(0) scale(1) !important;
-  }
+  /* --- 1. REVELADO --- */
+  .reveal { opacity: 0; transform: translateY(30px) scale(0.95); transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  :global(.reveal.active) { opacity: 1 !important; transform: translateY(0) scale(1) !important; }
 
-  /* --- 2. ESTILO BASE --- */
-  .event-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 2rem;
-    background: #111;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease;
-    min-height: 420px;
-    display: flex;
-    flex-direction: column;
-    z-index: 1;
-  }
+  /* --- 2. BASE CARD --- */
+  .event-card { position: relative; overflow: hidden; border-radius: 2rem; background: #111; border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.4s ease; min-height: 420px; display: flex; flex-direction: column; z-index: 1; }
   .event-card.featured { border: 1px solid rgba(250, 204, 21, 0.3); background: linear-gradient(145deg, #111 0%, #1a1a05 100%); }
   .event-card:hover { transform: scale(1.03) !important; border-color: #facc15; z-index: 50; }
 
@@ -134,7 +134,6 @@ const optimizedUrl = getOptimizedImage(imageUrl);
   .event-card:hover .card-image { opacity: 1 !important; filter: grayscale(0) !important; }
 
   .card-content { position: relative; z-index: 10; padding: 2rem; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; background: linear-gradient(to top, rgba(0,0,0,0.95) 20%, transparent 100%); flex-grow: 1; pointer-events: none; }
-
   .track-tag { font-size: 10px; font-weight: bold; letter-spacing: 0.2em; color: #22d3ee; text-transform: uppercase; }
   .card-title { font-size: 1.5rem; font-weight: bold; color: white; line-height: 1.2; margin: 0.25rem 0; }
   .card-meta { font-size: 0.875rem; color: rgba(255, 255, 255, 0.5); }
@@ -143,74 +142,27 @@ const optimizedUrl = getOptimizedImage(imageUrl);
   .featured-badge { background: #facc15; color: black; }
   .past-badge { background: #333; color: #888; }
 
-  /* --- 3. BOTONES Y ANIMACIÓN --- */
+  /* --- 3. BOTONES --- */
   .btn-container { pointer-events: auto; margin-top: 1.5rem; display: flex; align-items: center; }
-
-  .btn-inscribirse {
-    background: #facc15; color: black; font-size: 11px; font-weight: 900; text-transform: uppercase; font-style: italic;
-    padding: 0.7rem 1.4rem; border-radius: 0.6rem; text-decoration: none; display: inline-block;
-    transform: scale(0); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .btn-calendar {
-    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #facc15;
-    padding: 0.6rem; border-radius: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transform: scale(0); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s;
-  }
-
-  :global(.reveal.active) .btn-inscribirse,
-  :global(.reveal.active) .btn-calendar { transform: scale(1); }
-
-  .btn-calendar:hover { background: #facc15; color: black; border-color: #facc15; }
+  .btn-inscribirse { background: #facc15; color: black; font-size: 11px; font-weight: 900; text-transform: uppercase; font-style: italic; padding: 0.7rem 1.4rem; border-radius: 0.6rem; text-decoration: none; display: inline-block; transform: scale(0); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .btn-utility { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #facc15; padding: 0.6rem; border-radius: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transform: scale(0); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s; }
+  :global(.reveal.active) .btn-inscribirse, :global(.reveal.active) .btn-utility { transform: scale(1); }
+  .btn-utility:hover { background: #facc15; color: black; border-color: #facc15; }
 
   /* --- 4. DROPDOWN --- */
   .calendar-dropdown { position: relative; }
-  .calendar-menu {
-    position: absolute; bottom: calc(100% + 10px); right: 0; 
-    background: #000; border: 1px solid rgba(250, 204, 21, 0.2); border-radius: 1rem;
-    padding: 0.5rem; min-width: 180px; opacity: 0; visibility: hidden;
-    transform: translateY(10px); transition: all 0.3s ease; z-index: 100;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-  }
+  .calendar-menu { position: absolute; bottom: calc(100% + 10px); right: 0; background: #000; border: 1px solid rgba(250, 204, 21, 0.2); border-radius: 1rem; padding: 0.5rem; min-width: 180px; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
   .calendar-dropdown:hover .calendar-menu { opacity: 1; visibility: visible; transform: translateY(0); }
-  
-  .calendar-menu a {
-    display: block; padding: 0.7rem 1rem; color: white; text-decoration: none; 
-    font-size: 10px; font-weight: 800; text-transform: uppercase; border-radius: 0.5rem;
-    transition: background 0.2s ease;
-  }
+  .calendar-menu a { display: block; padding: 0.7rem 1rem; color: white; text-decoration: none; font-size: 10px; font-weight: 800; text-transform: uppercase; border-radius: 0.5rem; }
   .calendar-menu a:hover { background: rgba(250, 204, 21, 0.1); color: #facc15; }
 
-  /* --- 5. MODO LISTA --- */
-  :global(#events-container.flex-col) .event-card { min-height: 100px !important; flex-direction: row !important; }
-  :global(#events-container.flex-col) .card-image { position: relative !important; width: 80px !important; height: 80px !important; margin: 10px; border-radius: 12px; opacity: 1 !important; filter: none !important; }
-  :global(#events-container.flex-col) .card-content { background: none !important; padding: 0 1.5rem 0 0 !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; }
+  /* --- 5. MODO LISTA (CON FIX DE OVERFLOW) --- */
+  :global(#events-container.flex-col) .event-card { min-height: 100px !important; flex-direction: row !important; overflow: visible !important; }
+  :global(#events-container.flex-col) .event-card:hover { z-index: 100 !important; }
+  :global(#events-container.flex-col) .card-content { background: none !important; padding: 0 1.5rem 0 0 !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; overflow: visible !important; }
   :global(#events-container.flex-col) .btn-container { margin-top: 0 !important; }
-
-  /* --- 6. MODO LISTA (ACTUALIZADO) --- */
-  :global(#events-container.flex-col) .event-card { 
-    min-height: 100px !important; 
-    flex-direction: row !important; 
-    overflow: visible !important; 
-  }
-
-  :global(#events-container.flex-col) .event-card:hover {
-    z-index: 100 !important;
-  }
-
-  :global(#events-container.flex-col) .card-content { 
-    background: none !important; 
-    padding: 0 1.5rem 0 0 !important; 
-    flex-direction: row !important; 
-    align-items: center !important; 
-    justify-content: space-between !important;
-    overflow: visible !important;
-  }
-
-  :global(#events-container.flex-col) .calendar-menu {
-    right: 0;
-    bottom: calc(100% + 5px);
-  }
+  :global(#events-container.flex-col) .calendar-menu { right: 0; bottom: calc(100% + 5px); }
 
   .btn-finalizado { background: transparent; color: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.1); cursor: not-allowed; text-decoration: line-through; }
+  .is-past { filter: grayscale(1); opacity: 0.6; }
 </style>
