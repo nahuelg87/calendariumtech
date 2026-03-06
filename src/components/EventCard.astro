@@ -14,7 +14,7 @@ const fechaFormateada = fechaEvento.toLocaleDateString('es-AR', {
   year: 'numeric'
 }).replace('.', '');
 
-// 2. Lógica de Calendario (URLs Dinámicas)
+// 2. Lógica de Calendario (URLs Dinámicas y Archivo .ics)
 const encodedTitle = encodeURIComponent(`[Calendarium.tech] ${title}`);
 const encodedDesc = encodeURIComponent(`Evento: ${title}\nTrack: ${track}\nUbicación: ${location}\nLink: ${linkUrl}`);
 const encodedLoc = encodeURIComponent(location);
@@ -22,6 +22,22 @@ const gDate = date.replace(/-/g, '');
 
 const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodedTitle}&dates=${gDate}/${gDate}&details=${encodedDesc}&location=${encodedLoc}`;
 const outlookUrl = `https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${encodedTitle}&startdt=${date}&enddt=${date}&body=${encodedDesc}&location=${encodedLoc}`;
+
+// GENERACIÓN DE ARCHIVO .ICS (Para Mobile App Integration)
+const icsContent = [
+  'BEGIN:VCALENDAR',
+  'VERSION:2.0',
+  'BEGIN:VEVENT',
+  `DTSTART:${gDate}`,
+  `DTEND:${gDate}`,
+  `SUMMARY:[Calendarium.tech] ${title}`,
+  `DESCRIPTION:Evento de ${track}. Link: ${linkUrl}`,
+  `LOCATION:${location}`,
+  'END:VEVENT',
+  'END:VCALENDAR'
+].join('\n');
+
+const icsUrl = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
 
 // 3. Configuración de Cloudinary
 const CLOUD_NAME = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -75,7 +91,8 @@ const optimizedUrl = getOptimizedImage(imageUrl);
             </button>
             <div class="calendar-menu">
               <a href={googleUrl} target="_blank">Google Calendar</a>
-              <a href={outlookUrl} target="_blank">Outlook</a>
+              <a href={outlookUrl} target="_blank">Outlook (Web)</a>
+              <a href={icsUrl} download={`${title}.ics`} class="text-cyan-400">Apple / Android App</a>
             </div>
           </div>
         </div>
@@ -151,7 +168,7 @@ const optimizedUrl = getOptimizedImage(imageUrl);
   .calendar-menu {
     position: absolute; bottom: calc(100% + 10px); right: 0; 
     background: #000; border: 1px solid rgba(250, 204, 21, 0.2); border-radius: 1rem;
-    padding: 0.5rem; min-width: 160px; opacity: 0; visibility: hidden;
+    padding: 0.5rem; min-width: 180px; opacity: 0; visibility: hidden;
     transform: translateY(10px); transition: all 0.3s ease; z-index: 100;
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
   }
@@ -174,11 +191,9 @@ const optimizedUrl = getOptimizedImage(imageUrl);
   :global(#events-container.flex-col) .event-card { 
     min-height: 100px !important; 
     flex-direction: row !important; 
-    /* IMPORTANTE: Permitimos que el menú salga de la fila */
     overflow: visible !important; 
   }
 
-  /* Aseguramos que la card que tiene el menú abierto quede por encima de las otras */
   :global(#events-container.flex-col) .event-card:hover {
     z-index: 100 !important;
   }
@@ -189,12 +204,10 @@ const optimizedUrl = getOptimizedImage(imageUrl);
     flex-direction: row !important; 
     align-items: center !important; 
     justify-content: space-between !important;
-    /* Liberamos también este contenedor interno */
     overflow: visible !important;
   }
 
   :global(#events-container.flex-col) .calendar-menu {
-    /* En lista, que abra hacia la izquierda para no salirse de la pantalla */
     right: 0;
     bottom: calc(100% + 5px);
   }
