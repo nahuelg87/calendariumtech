@@ -15,17 +15,33 @@ const { title, description = "Calendario de eventos tech con estética minimalis
 
 <!doctype html>
 <html lang="es" class="dark">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="description" content={description} />
-        <meta name="viewport" content="width=device-width" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/png" href="/favicon.png" />
-        <title>Calendarium.tech | {title}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-    </head>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    
+    <title>Calendarium.tech | {title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href="https://calendarium.tech/" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://calendarium.tech/" />
+    <meta property="og:title" content={`Calendarium.tech | ${title}`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="https://calendarium.tech/og-image.png" />
+
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://calendarium.tech/" />
+    <meta property="twitter:title" content={`Calendarium.tech | ${title}`} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content="https://calendarium.tech/og-image.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+</head>
     <body class="bg-transparent text-white font-sans antialiased flex flex-col min-h-screen relative">
     
     <Background /> 
