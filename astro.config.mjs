@@ -20,7 +20,6 @@ export default defineConfig({
   // Configuración optimizada para Astro 5 en Netlify
   adapter: netlify({
     edgeMiddleware: true,
-    // Forzamos el nombre de la función para que coincida con el redireccionamiento
-    functionName: 'entry'
+
   })
 });

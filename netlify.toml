@@ -2,8 +2,8 @@
   command = "npm run build"
   publish = "dist"
 
+# Eliminamos node_compatibility de acá porque da conflicto de sintaxis
 [functions]
-  node_compatibility = "version_20"
   directory = ".netlify/functions-internal"
 
 [[redirects]]
