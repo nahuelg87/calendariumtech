@@ -1,8 +1,15 @@
 ---
 // src/components/EventCard.astro
-const { title, date, track, imageUrl, location, linkUrl, is_featured } = Astro.props;
+// 1. Recibimos event_tags (array) e image_url (nombre corregido de la DB)
+const { title, date, event_tags, image_url, location, linkUrl, is_featured } = Astro.props;
 
-// 1. Lógica de Fecha (Comparación y Formateo)
+// 2. Procesamiento de Tracks (Aquí definimos tracksList para que no de error)
+const tracksList = event_tags?.map((t: any) => t.track_name) || [];
+const allTracksString = tracksList.join(', '); // Para textos y calendarios
+const dataFilterString = tracksList.join(' '); // Ejemplo: "Cloud DevSecOps"// 
+const primaryTrack = tracksList[0] || 'General';
+
+// 3. Lógica de Fecha (Comparación y Formateo)
 const fechaEvento = new Date(date + 'T00:00:00');
 const hoy = new Date();
 hoy.setHours(0, 0, 0, 0); 
@@ -14,7 +21,7 @@ const fechaFormateada = fechaEvento.toLocaleDateString('es-AR', {
   year: 'numeric'
 }).replace('.', '');
 
-// 2. Lógica de Slug, Deep Link y Compartir
+// 4. Lógica de Slug, Deep Link y Compartir
 const eventSlug = title
   .toLowerCase()
   .normalize("NFD")
@@ -24,9 +31,9 @@ const eventSlug = title
 
 const fullShareUrl = `https://calendarium.tech/#${eventSlug}`;
 
-// 3. Lógica de Calendarios (URLs Dinámicas y Archivo .ics)
+// 5. Lógica de Calendarios (URLs Dinámicas y Archivo .ics)
 const encodedTitle = encodeURIComponent(`[Calendarium.tech] ${title}`);
-const encodedDesc = encodeURIComponent(`Evento: ${title}\nTrack: ${track}\nLink: ${linkUrl}`);
+const encodedDesc = encodeURIComponent(`Evento: ${title}\nTracks: ${allTracksString}\nLink: ${linkUrl}`);
 const encodedLoc = encodeURIComponent(location);
 const gDate = date.replace(/-/g, '');
 
@@ -40,14 +47,14 @@ const icsContent = [
   `DTSTART:${gDate}`,
   `DTEND:${gDate}`,
   `SUMMARY:[Calendarium.tech] ${title}`,
-  `DESCRIPTION:Evento de ${track}. Link: ${linkUrl}`,
+  `DESCRIPTION:Evento de ${allTracksString}. Link: ${linkUrl}`,
   `LOCATION:${location}`,
   'END:VEVENT',
   'END:VCALENDAR'
 ].join('\n');
 const icsUrl = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
 
-// 4. Configuración de Cloudinary
+// 6. Configuración de Cloudinary
 const CLOUD_NAME = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
 const getOptimizedImage = (url: string) => {
   const cleanUrl = url?.trim() || '';
@@ -58,11 +65,11 @@ const getOptimizedImage = (url: string) => {
   if (cleanUrl.includes('cloudinary.com')) return cleanUrl.replace('/upload/', `/upload/${transformations}/`);
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(cleanUrl)}`;
 };
-const optimizedUrl = getOptimizedImage(imageUrl);
+const optimizedUrl = getOptimizedImage(image_url);
 ---
 
 <div 
-  data-card-track={track} 
+  data-card-track={dataFilterString} 
   class={`event-card group reveal ${is_featured ? 'featured' : ''} ${estaFinalizado ? 'is-past' : ''}`}
 >
   {is_featured && !estaFinalizado && <span class="featured-badge">DESTACADO</span>}
@@ -72,7 +79,12 @@ const optimizedUrl = getOptimizedImage(imageUrl);
   
   <div class="card-content">
     <div class="card-info">
-      <span class="track-tag">{track}</span>
+      <div class="flex flex-wrap gap-2 mb-2">
+        {tracksList.map((tName: string) => (
+          <span class="track-tag">{tName}</span>
+        ))}
+        {tracksList.length === 0 && <span class="track-tag">General</span>}
+      </div>
       <h3 class="card-title">{title}</h3>
       <p class="card-meta">{fechaFormateada} • {location}</p>
     </div>
@@ -120,6 +132,8 @@ const optimizedUrl = getOptimizedImage(imageUrl);
 </div>
 
 <style>
+  @reference "tailwindcss";
+
   /* --- 1. REVELADO --- */
   .reveal { opacity: 0; transform: translateY(30px) scale(0.95); transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
   :global(.reveal.active) { opacity: 1 !important; transform: translateY(0) scale(1) !important; }
@@ -134,7 +148,9 @@ const optimizedUrl = getOptimizedImage(imageUrl);
   .event-card:hover .card-image { opacity: 1 !important; filter: grayscale(0) !important; }
 
   .card-content { position: relative; z-index: 10; padding: 2rem; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; background: linear-gradient(to top, rgba(0,0,0,0.95) 20%, transparent 100%); flex-grow: 1; pointer-events: none; }
-  .track-tag { font-size: 10px; font-weight: bold; letter-spacing: 0.2em; color: #22d3ee; text-transform: uppercase; }
+  
+  .track-tag { font-size: 9px; font-weight: bold; letter-spacing: 0.1em; color: #22d3ee; text-transform: uppercase; border: 1px solid rgba(34, 211, 238, 0.2); padding: 2px 8px; border-radius: 4px; background: rgba(34, 211, 238, 0.05); }
+  
   .card-title { font-size: 1.5rem; font-weight: bold; color: white; line-height: 1.2; margin: 0.25rem 0; }
   .card-meta { font-size: 0.875rem; color: rgba(255, 255, 255, 0.5); }
 
@@ -156,9 +172,8 @@ const optimizedUrl = getOptimizedImage(imageUrl);
   .calendar-menu a { display: block; padding: 0.7rem 1rem; color: white; text-decoration: none; font-size: 10px; font-weight: 800; text-transform: uppercase; border-radius: 0.5rem; }
   .calendar-menu a:hover { background: rgba(250, 204, 21, 0.1); color: #facc15; }
 
-  /* --- 5. MODO LISTA (CON FIX DE OVERFLOW) --- */
+  /* --- 5. MODO LISTA --- */
   :global(#events-container.flex-col) .event-card { min-height: 100px !important; flex-direction: row !important; overflow: visible !important; }
-  :global(#events-container.flex-col) .event-card:hover { z-index: 100 !important; }
   :global(#events-container.flex-col) .card-content { background: none !important; padding: 0 1.5rem 0 0 !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; overflow: visible !important; }
   :global(#events-container.flex-col) .btn-container { margin-top: 0 !important; }
   :global(#events-container.flex-col) .calendar-menu { right: 0; bottom: calc(100% + 5px); }

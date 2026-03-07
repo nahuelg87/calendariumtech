@@ -1,0 +1,91 @@
+---
+export const prerender = false;
+import MainLayout from "../../../layouts/MainLayout.astro";
+import { supabase } from "../../../lib/supabase";
+
+const { id } = Astro.params;
+
+// 1. Traemos la data del evento
+const { data: event } = await supabase
+  .from("events")
+  .select(`*, event_tags(track_name)`)
+  .eq("id", id)
+  .single();
+
+// 2. Traemos todos los tracks disponibles para los selectores
+const { data: allTracks } = await supabase.from("tracks").select("name").order("name");
+
+// 3. Mapeamos los tags actuales para precargar los selects
+const currentTags = event?.event_tags?.map((t: any) => t.track_name) || [];
+
+if (!event) return Astro.redirect("/admin");
+---
+
+<MainLayout title={`Editando: ${event.title}`}>
+  <section class="max-w-4xl mx-auto p-6">
+    <a href="/admin" class="text-white/30 hover:text-[#facc15] text-xs font-bold uppercase tracking-widest mb-8 inline-block">← Cancelar Edición</a>
+    
+    <div class="bg-[#111] border border-white/10 p-10 rounded-3xl shadow-2xl">
+      <h1 class="text-3xl font-black italic text-white mb-10 text-center">EDITAR <span class="text-[#22d3ee]">EVENTO</span></h1>
+
+      <form action="/api/events/update" method="post" class="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <input type="hidden" name="id" value={event.id} />
+
+        <div class="md:col-span-6">
+          <label class="label-tech">Nombre del Evento</label>
+          <input type="text" name="title" required value={event.title} class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Fecha</label>
+          <input type="date" name="date" required value={event.date} class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Ubicación</label>
+          <input type="text" name="location" required value={event.location} class="input-tech" />
+        </div>
+
+        {/* Tracks - Precargamos los valores actuales */}
+        {[1, 2, 3].map((num) => (
+          <div class="md:col-span-2">
+            <label class="label-tech">Track {num} {num === 1 ? '(Principal)' : '(Opcional)'}</label>
+            <select name={`track_${num}`} required={num === 1} class="input-tech">
+              <option value="">{num === 1 ? 'Seleccionar...' : 'Ninguno'}</option>
+              {allTracks?.map(track => (
+                <option value={track.name} selected={currentTags[num-1] === track.name}>
+                  {track.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Imagen (URL)</label>
+          <input type="url" name="imageUrl" required value={event.image_url} class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Link Registro</label>
+          <input type="url" name="linkUrl" value={event.link_url} class="input-tech" />
+        </div>
+
+        <div class="md:col-span-6 flex items-center gap-3 py-4">
+          <input type="checkbox" name="is_featured" id="featured" checked={event.is_featured} class="w-5 h-5 accent-[#facc15]" />
+          <label for="featured" class="text-white font-bold cursor-pointer italic uppercase text-xs tracking-widest">¿Destacar en Home?</label>
+        </div>
+
+        <button type="submit" class="md:col-span-6 bg-[#22d3ee] text-black font-black uppercase italic py-4 rounded-xl hover:bg-white transition-all">
+          Guardar Cambios
+        </button>
+      </form>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  @reference "tailwindcss";
+  .label-tech { @apply block text-[10px] font-bold uppercase tracking-[0.2em] text-[#22d3ee] mb-2; }
+  .input-tech { @apply w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#facc15] outline-none transition-all; }
+</style>

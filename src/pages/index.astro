@@ -1,26 +1,40 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import EventCard from '../components/EventCard.astro';
-// Eliminamos HeroCube e importamos solo Hero3D
 import Hero3D from '../components/Hero3D.jsx';
 import { supabase } from '../lib/supabase';
 
-// 1. Traemos los Tracks (para los filtros)
+// 1. Traemos los Tracks (para los filtros de la interfaz)
 const { data: tracks } = await supabase
   .from('tracks')
   .select('name')
   .order('name', { ascending: true });
 
-// 2. Traemos los Eventos (con el orden de destacados y fecha)
+// 2. Traemos los Eventos con sus Tags (Relación Many-to-Many)
 const { data: events, error } = await supabase
   .from('events')
-  .select('*')
-  .order('is_featured', { ascending: false }) // Destacados arriba
-  .order('date', { ascending: true });        // El más próximo primero
+  .select(`
+    *,
+    event_tags (
+      track_name
+    )
+  `)
+  .order('is_featured', { ascending: false }) 
+  .order('date', { ascending: true });
 
 if (error) {
   console.error("Error de SysAdmin en Supabase:", error.message);
 }
+
+// --- LÓGICA DE ORDENAMIENTO (SOLO EVENTOS FINALIZADOS AL FINAL) ---
+const hoy = new Date();
+hoy.setHours(0, 0, 0, 0);
+
+const upcomingEvents = events?.filter(e => new Date(e.date + 'T00:00:00') >= hoy) || [];
+const pastEvents = events?.filter(e => new Date(e.date + 'T00:00:00') < hoy) || [];
+
+// Unimos las listas: Primero los que vienen, luego los que pasaron
+const sortedEvents = [...upcomingEvents, ...pastEvents];
 ---
 
 <MainLayout title="Eventos Tech">
@@ -75,27 +89,23 @@ if (error) {
 
   <div id="sidebar-overlay" class="fixed inset-0 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-500 z-[150]"></div>
   
-  <main 
-    id="events-container" 
-    class="group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10"
-  >
-    {events?.map(event => {
-      // Generamos el slug: "Nerdearla 2026" -> "nerdearla-2026"
+  <main id="events-container" class="group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500">
+    {sortedEvents.map(event => {
       const eventId = event.title
         .toLowerCase()
-        .normalize("NFD") // Quita tildes
+        .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "") 
-        .replace(/\s+/g, '-') // Espacios por guiones
-        .replace(/[^\w\-]+/g, ''); // Quita caracteres raros
+        .replace(/\s+/g, '-') 
+        .replace(/[^\w\-]+/g, '');
 
       return (
-        <div id={eventId} class="scroll-mt-28"> 
+        <div id={eventId} class="scroll-mt-28 transition-all duration-500"> 
           <EventCard 
             title={event.title}
             date={event.date}
-            track={event.track}
+            event_tags={event.event_tags} 
             location={event.location}
-            imageUrl={event.image_url} 
+            image_url={event.image_url} 
             linkUrl={event.link_url}
             is_featured={event.is_featured}
           />
@@ -117,12 +127,9 @@ if (error) {
     
     if (!container || !sidebar || !overlay) return;
 
-    // Lógica mejorada para mobile (evita problemas de eventos táctiles)
     const toggleSidebar = (e: Event) => {
       if (e) e.preventDefault();
-      
       const isOpen = !sidebar.classList.contains('translate-x-full');
-      
       if (isOpen) {
         sidebar.classList.add('translate-x-full');
         overlay.classList.add('opacity-0', 'pointer-events-none');
@@ -158,19 +165,21 @@ if (error) {
         
         allCards.forEach(card => {
           const htmlCard = card as HTMLElement;
-          const cardTrack = htmlCard.getAttribute('data-card-track') || htmlCard.getAttribute('data-track');
+          const gridItem = htmlCard.closest('.scroll-mt-28') as HTMLElement; // El contenedor real en el grid
+          
+          const cardTracksStr = htmlCard.getAttribute('data-card-track') || "";
+          const tracksArray = cardTracksStr.split(' ');
 
-          if (selectedTrack === 'all' || cardTrack === selectedTrack) {
+          if (selectedTrack === 'all' || tracksArray.includes(selectedTrack || "")) {
+            if (gridItem) gridItem.style.display = 'block'; // Mostramos el contenedor
             htmlCard.style.display = 'flex';
             setTimeout(() => htmlCard.classList.add('active'), 10);
           } else {
-            htmlCard.style.display = 'none';
+            if (gridItem) gridItem.style.display = 'none'; // Ocultamos el contenedor para reordenar grid
           }
-
-          
         });
 
-        // Cerramos el sidebar usando la lógica centralizada
+        // Cerrar sidebar y resetear overlay (Limpieza total)
         sidebar.classList.add('translate-x-full');
         overlay.classList.add('opacity-0', 'pointer-events-none');
         overlay.classList.remove('opacity-100', 'pointer-events-auto');
@@ -178,24 +187,19 @@ if (error) {
     });
 
     listBtn?.addEventListener('click', () => {
-      container.className = "group flex flex-col gap-3 relative z-10";
+      container.className = "group flex flex-col gap-3 relative z-10 transition-all duration-500";
       listBtn.classList.add('bg-white/10', 'text-white');
-      listBtn.classList.remove('text-white/20');
       gridBtn?.classList.remove('bg-white/10', 'text-white');
-      gridBtn?.classList.add('text-white/20');
     });
 
     gridBtn?.addEventListener('click', () => {
-      container.className = "group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10";
+      container.className = "group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500";
       gridBtn.classList.add('bg-white/10', 'text-white');
-      gridBtn.classList.remove('text-white/20');
       listBtn?.classList.remove('bg-white/10', 'text-white');
-      listBtn?.classList.add('text-white/20');
     });
   }
 
   init();
   document.addEventListener('astro:after-swap', init);
   document.addEventListener('astro:page-load', init);
-  
 </script>
