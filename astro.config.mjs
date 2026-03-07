@@ -3,12 +3,12 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
-import netlify from '@astrojs/netlify'; // <--- USAR ESTE
+import netlify from '@astrojs/netlify';
 
 export default defineConfig({
   site: 'https://calendariumtech.netlify.app',
   
-  // ESTO ES VITAL: Le dice a Astro que el sitio es dinámico
+  // Mantenemos el modo servidor para que las funciones SSR se generen
   output: 'server', 
   
   vite: {
@@ -17,8 +17,10 @@ export default defineConfig({
   
   integrations: [react(), sitemap()],
   
-  // Adaptador oficial para las Functions de Netlify
+  // Configuración optimizada para Astro 5 en Netlify
   adapter: netlify({
-    edgeMiddleware: true 
+    edgeMiddleware: true,
+    // Forzamos el nombre de la función para que coincida con el redireccionamiento
+    functionName: 'entry'
   })
-});    
+});
