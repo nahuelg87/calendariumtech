@@ -6,7 +6,7 @@ import sitemap from '@astrojs/sitemap';
 import netlify from '@astrojs/netlify'; // <--- USAR ESTE
 
 export default defineConfig({
-  site: 'https://calendarium.tech',
+  site: 'https://calendariumtech.netlify.app',
   
   // ESTO ES VITAL: Le dice a Astro que el sitio es dinámico
   output: 'server', 
