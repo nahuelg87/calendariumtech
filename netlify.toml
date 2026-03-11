@@ -1,7 +1,6 @@
 [build]
-  command = "npm run build && echo '/* /.netlify/functions/ssr 200' > dist/_redirects"
+  command = "npm run build && node fix-redirects.mjs"
   publish = "dist"
 
 [functions]
   node_bundler = "esbuild"
-  directory = ".netlify/v1/functions"
