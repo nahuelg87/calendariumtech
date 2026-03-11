@@ -12,7 +12,9 @@ export default defineConfig({
     react(),
     sitemap()
   ],
-  adapter: netlify(),
+  adapter: netlify({
+    functionPerRoute: false
+  }),
   vite: {
     plugins: [tailwindcss()],
     define: {
