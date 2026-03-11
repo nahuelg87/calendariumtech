@@ -1,0 +1,46 @@
+---
+export const prerender = false;
+import MainLayout from "../layouts/MainLayout.astro";
+
+// Si ya hay sesión, mandamos al usuario al admin directamente
+const accessToken = Astro.cookies.get("sb-access-token");
+if (accessToken) return Astro.redirect("/admin");
+---
+
+<MainLayout title="Acceso Admin">
+  <section class="min-h-[80vh] flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-[#111] border border-white/10 p-8 rounded-3xl shadow-2xl">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-black italic text-white mb-2">LOGIN <span class="text-[#facc15]">ADMIN</span></h1>
+        <p class="text-white/50 text-sm">Solo personal autorizado de Calendarium.tech</p>
+      </div>
+
+      <form action="/api/auth/signin" method="post" class="space-y-6">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-[#22d3ee] mb-2">Email</label>
+          <input 
+            type="email" name="email" required 
+            class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#facc15] outline-none transition-all"
+            placeholder="admin@calendarium.tech"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-[#22d3ee] mb-2">Contraseña</label>
+          <input 
+            type="password" name="password" required 
+            class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#facc15] outline-none transition-all"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full bg-[#facc15] text-black font-black uppercase italic py-4 rounded-xl hover:bg-white transition-colors shadow-[0_0_20px_rgba(250,204,21,0.2)]"
+        >
+          Entrar al Bunker
+        </button>
+      </form>
+    </div>
+  </section>
+</MainLayout>

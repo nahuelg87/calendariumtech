@@ -1,0 +1,104 @@
+---
+export const prerender = false;
+import MainLayout from "../../layouts/MainLayout.astro";
+import { supabase } from "../../lib/supabase";
+
+// 1. Traemos los eventos junto con sus tags (Relación Many-to-Many)
+const { data: events } = await supabase
+  .from("events")
+  .select(`
+    *,
+    event_tags (
+      track_name
+    )
+  `)
+  .order("created_at", { ascending: false }); // <--- CAMBIO: Lo más nuevo cargado, arriba.
+---
+
+<MainLayout title="Panel de Control">
+  <div class="max-w-6xl mx-auto p-6">
+    <header class="flex justify-between items-center mb-12">
+      <div>
+        <h1 class="text-4xl font-black italic text-white">DASHBOARD</h1>
+        <p class="text-white/50 font-mono text-xs uppercase tracking-tighter">
+          Gestionando {events?.length || 0} eventos en el búnker
+        </p>
+      </div>
+      <div class="flex gap-4">
+        <a href="/admin/nuevo" class="bg-[#facc15] text-black font-black italic px-6 py-3 rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(250,204,21,0.2)]">
+          + NUEVO EVENTO
+        </a>
+        <form action="/api/auth/signout" method="post">
+          <button class="border border-white/10 text-white/50 px-6 py-3 rounded-xl hover:bg-red-500/20 hover:text-red-500 transition-all font-bold text-xs uppercase tracking-widest">
+            Salir
+          </button>
+        </form>
+      </div>
+    </header>
+
+    <div class="grid gap-4">
+      {events?.map(event => {
+        // Procesamos los tags para mostrarlos en la lista
+        const tracksList = event.event_tags?.map((t: any) => t.track_name) || [];
+        const displayTracks = tracksList.length > 0 ? tracksList.join(" • ") : "Sin categoría";
+
+        return (
+          <div class="bg-[#111] border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:border-[#22d3ee]/30 transition-all duration-500">
+            <div class="flex items-center gap-6">
+              {/* Indicador de Fecha */}
+              <div class="w-14 h-14 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center group-hover:border-[#facc15]/50 transition-colors">
+                <span class="text-[#facc15] font-black text-xl leading-none">{event.date.split('-')[2]}</span>
+                <span class="text-white/30 text-[9px] font-bold uppercase">{new Date(event.date).toLocaleString('es', { month: 'short' })}</span>
+              </div>
+
+              <div>
+                <h3 class="text-white font-bold text-lg group-hover:text-[#facc15] transition-colors">{event.title}</h3>
+                <p class="text-[10px] text-white/30 uppercase tracking-[0.2em] font-medium">
+                  <span class="text-[#22d3ee]">{displayTracks}</span> — {event.location}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex gap-4 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+              <a 
+  href={`/admin/editar/${event.id}`} 
+  class="p-2 text-white/30 hover:text-[#facc15] transition-colors" 
+  title="Editar"
+>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+  </svg>
+</a>
+               {/* Botón Borrar (Implementado) */}
+               <form 
+                 action="/api/events/delete" 
+                 method="POST" 
+                 onsubmit="return confirm('¿Estás seguro, Nahuel? Se va a borrar el evento y sus relaciones.');"
+               >
+                 <input type="hidden" name="id" value={event.id} />
+                 <button 
+                   type="submit" 
+                   class="p-2 text-white/30 hover:text-red-500 transition-colors"
+                   title="Eliminar"
+                 >
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                 </button>
+               </form>
+            </div>
+          </div>
+        );
+      })}
+      
+      {events?.length === 0 && (
+        <div class="py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+          <p class="text-white/20 uppercase tracking-widest text-xs font-bold italic">No hay misiones activas en la agenda</p>
+        </div>
+      )}
+    </div>
+  </div>
+</MainLayout>
+
+<style>
+  @reference "tailwindcss";
+</style>

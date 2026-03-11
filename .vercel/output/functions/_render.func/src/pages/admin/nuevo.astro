@@ -1,0 +1,106 @@
+---
+export const prerender = false;
+import MainLayout from "../../layouts/MainLayout.astro";
+import { supabase } from "../../lib/supabase"; // Importamos el cliente
+
+// Traemos los tracks directamente de tu DB para que coincidan al 100%
+const { data: allTracks } = await supabase
+  .from('tracks')
+  .select('name')
+  .order('name', { ascending: true });
+---
+
+<MainLayout title="Nuevo Evento">
+  <section class="max-w-4xl mx-auto p-6">
+    <a href="/admin" class="text-white/30 hover:text-[#facc15] text-xs font-bold uppercase tracking-widest mb-8 inline-block">← Volver al Dashboard</a>
+    
+    <div class="bg-[#111] border border-white/10 p-10 rounded-3xl shadow-2xl">
+      <header class="mb-10">
+        <h1 class="text-3xl font-black italic text-white">NUEVO <span class="text-[#facc15]">EVENTO</span></h1>
+        <p class="text-white/30 text-sm mt-2 font-mono uppercase tracking-tighter">Multi-track System Active</p>
+      </header>
+
+      <form action="/api/events/create" method="post" class="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <div class="md:col-span-6">
+          <label class="label-tech">Nombre del Evento</label>
+          <input type="text" name="title" required placeholder="Ej: Nerdearla 2026" class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Fecha</label>
+          <input type="date" name="date" required class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Ubicación</label>
+          <input type="text" name="location" required placeholder="CABA, Virtual, etc." class="input-tech" />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="label-tech">Track 1 (Principal)</label>
+          <select name="track_1" required class="input-tech">
+            <option value="">Seleccionar...</option>
+            {allTracks?.map(track => (
+              <option value={track.name}>{track.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="label-tech">Track 2 (Opcional)</label>
+          <select name="track_2" class="input-tech">
+            <option value="">Ninguno</option>
+            {allTracks?.map(track => (
+              <option value={track.name}>{track.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="label-tech">Track 3 (Opcional)</label>
+          <select name="track_3" class="input-tech">
+            <option value="">Ninguno</option>
+            {allTracks?.map(track => (
+              <option value={track.name}>{track.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Imagen (URL)</label>
+          <input type="url" name="imageUrl" required placeholder="https://..." class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Link Registro</label>
+          <input type="url" name="linkUrl" placeholder="https://..." class="input-tech" />
+        </div>
+
+        <div class="md:col-span-6 flex items-center gap-3 py-4">
+          <input type="checkbox" name="is_featured" id="featured" class="w-5 h-5 accent-[#facc15]" />
+          <label for="featured" class="text-white font-bold cursor-pointer italic uppercase text-xs tracking-widest">¿Destacar en Home?</label>
+        </div>
+
+        <button type="submit" class="md:col-span-6 bg-[#facc15] text-black font-black uppercase italic py-4 rounded-xl hover:bg-white transition-all shadow-[0_0_30px_rgba(250,204,21,0.2)]">
+          Publicar en Calendarium.tech
+        </button>
+      </form>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  @reference "tailwindcss"; 
+
+  .label-tech { 
+    @apply block text-[10px] font-bold uppercase tracking-[0.2em] text-[#22d3ee] mb-2; 
+  }
+  
+  .input-tech { 
+    @apply w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#facc15] outline-none transition-all placeholder:text-white/20; 
+  }
+
+  select.input-tech option {
+    @apply bg-[#111] text-white;
+  }
+</style>
