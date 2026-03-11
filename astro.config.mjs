@@ -1,25 +1,22 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import netlify from '@astrojs/netlify';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   site: 'https://calendariumtech.netlify.app',
-  
-  // Mantenemos el modo servidor para que las funciones SSR se generen
-  output: 'server', 
-  
+  output: 'server',
+  integrations: [
+    react(),
+    sitemap()
+  ],
+  adapter: netlify(),
   vite: {
-    plugins: [tailwindcss()]
-  },
-  
-  integrations: [react(), sitemap()],
-  
-  // Configuración optimizada para Astro 5 en Netlify
-  adapter: netlify({
-    edgeMiddleware: true,
-
-  })
+    plugins: [tailwindcss()],
+    define: {
+      __DEFINES__: {}
+    }
+  }
 });

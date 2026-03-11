@@ -4,36 +4,25 @@ import EventCard from '../components/EventCard.astro';
 import Hero3D from '../components/Hero3D.jsx';
 import { supabase } from '../lib/supabase';
 
-// 1. Traemos los Tracks (para los filtros de la interfaz)
+// 1. Traemos los Tracks
 const { data: tracks } = await supabase
   .from('tracks')
   .select('name')
   .order('name', { ascending: true });
 
-// 2. Traemos los Eventos con sus Tags (Relación Many-to-Many)
+// 2. Traemos los Eventos
 const { data: events, error } = await supabase
   .from('events')
-  .select(`
-    *,
-    event_tags (
-      track_name
-    )
-  `)
+  .select(`*, event_tags ( track_name )`)
   .order('is_featured', { ascending: false }) 
   .order('date', { ascending: true });
 
-if (error) {
-  console.error("Error de SysAdmin en Supabase:", error.message);
-}
+if (error) console.error("Error de SysAdmin en Supabase:", error.message);
 
-// --- LÓGICA DE ORDENAMIENTO (SOLO EVENTOS FINALIZADOS AL FINAL) ---
-const hoy = new Date();
-hoy.setHours(0, 0, 0, 0);
-
-const upcomingEvents = events?.filter(e => new Date(e.date + 'T00:00:00') >= hoy) || [];
-const pastEvents = events?.filter(e => new Date(e.date + 'T00:00:00') < hoy) || [];
-
-// Unimos las listas: Primero los que vienen, luego los que pasaron
+// 3. Lógica de Ordenamiento
+const hoyStr = new Date().toISOString().split('T')[0];
+const upcomingEvents = events?.filter(e => (e.date || '2026-01-01') >= hoyStr) || [];
+const pastEvents = events?.filter(e => (e.date || '2026-01-01') < hoyStr) || [];
 const sortedEvents = [...upcomingEvents, ...pastEvents];
 ---
 
@@ -42,7 +31,6 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
     <h1 class="text-4xl md:text-7xl lg:text-8xl font-black italic uppercase tracking-tighter leading-none text-center md:text-left text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">
       Calendarium<span class="text-yellow-400">.tech</span>
     </h1>
-    
     <div class="w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
       <Hero3D client:load />
     </div>
@@ -69,19 +57,15 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
   <aside id="filter-sidebar" class="fixed inset-y-0 right-0 w-72 bg-black/95 backdrop-blur-3xl border-l border-white/10 z-[200] translate-x-full transition-transform duration-500">
     <div class="p-8 h-full flex flex-col">
       <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-black italic uppercase tracking-tighter">Tracks</h2>
+        <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Tracks</h2>
         <button id="close-filters" class="p-2 hover:bg-white/10 rounded-full text-white">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="space-y-3">
-        <button class="filter-btn w-full text-left px-5 py-3 rounded-xl border border-white/20 bg-white/10 text-xs font-bold hover:border-white transition-all uppercase italic text-white" data-track="all">
-          Todos los eventos
-        </button>
+        <button class="filter-btn w-full text-left px-5 py-3 rounded-xl border border-white/20 bg-white/10 text-xs font-bold text-white hover:border-white transition-all uppercase italic" data-track="all">Todos los eventos</button>
         {tracks?.map(t => (
-          <button class="filter-btn w-full text-left px-5 py-3 rounded-xl border border-white/5 bg-white/5 text-xs font-bold hover:border-white transition-all uppercase italic text-white" data-track={t.name}>
-            {t.name}
-          </button>
+          <button class="filter-btn w-full text-left px-5 py-3 rounded-xl border border-white/5 bg-white/5 text-xs font-bold text-white hover:border-white transition-all uppercase italic" data-track={t.name}>{t.name}</button>
         ))}
       </div>
     </div>
@@ -91,24 +75,10 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
   
   <main id="events-container" class="group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500">
     {sortedEvents.map(event => {
-      const eventId = event.title
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") 
-        .replace(/\s+/g, '-') 
-        .replace(/[^\w\-]+/g, '');
-
+      const eventId = event.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
       return (
         <div id={eventId} class="scroll-mt-28 transition-all duration-500"> 
-          <EventCard 
-            title={event.title}
-            date={event.date}
-            event_tags={event.event_tags} 
-            location={event.location}
-            image_url={event.image_url} 
-            linkUrl={event.link_url}
-            is_featured={event.is_featured}
-          />
+          <EventCard {...event} />
         </div>
       );
     })}
@@ -124,11 +94,11 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
     const closeBtn = document.getElementById('close-filters');
     const gridBtn = document.getElementById('grid-btn');
     const listBtn = document.getElementById('list-btn');
+    const filterButtons = document.querySelectorAll('.filter-btn');
     
     if (!container || !sidebar || !overlay) return;
 
-    const toggleSidebar = (e: Event) => {
-      if (e) e.preventDefault();
+    const toggleSidebar = () => {
       const isOpen = !sidebar.classList.contains('translate-x-full');
       if (isOpen) {
         sidebar.classList.add('translate-x-full');
@@ -145,47 +115,31 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
     closeBtn?.addEventListener('click', toggleSidebar);
     overlay?.addEventListener('click', toggleSidebar);
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
-
-    const allCards = container.querySelectorAll('.event-card');
-    allCards.forEach(card => observer.observe(card));
-
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    
+    // Filtrado con reorganización de Grid
     filterButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const selectedTrack = btn.getAttribute('data-track');
+        const allCards = container.querySelectorAll('.event-card');
         
         allCards.forEach(card => {
           const htmlCard = card as HTMLElement;
-          const gridItem = htmlCard.closest('.scroll-mt-28') as HTMLElement; // El contenedor real en el grid
-          
+          const gridItem = htmlCard.closest('.scroll-mt-28') as HTMLElement;
           const cardTracksStr = htmlCard.getAttribute('data-card-track') || "";
           const tracksArray = cardTracksStr.split(' ');
 
           if (selectedTrack === 'all' || tracksArray.includes(selectedTrack || "")) {
-            if (gridItem) gridItem.style.display = 'block'; // Mostramos el contenedor
+            if (gridItem) gridItem.style.display = 'block';
             htmlCard.style.display = 'flex';
             setTimeout(() => htmlCard.classList.add('active'), 10);
           } else {
-            if (gridItem) gridItem.style.display = 'none'; // Ocultamos el contenedor para reordenar grid
+            if (gridItem) gridItem.style.display = 'none';
           }
         });
-
-        // Cerrar sidebar y resetear overlay (Limpieza total)
-        sidebar.classList.add('translate-x-full');
-        overlay.classList.add('opacity-0', 'pointer-events-none');
-        overlay.classList.remove('opacity-100', 'pointer-events-auto');
+        toggleSidebar();
       });
     });
 
+    // Modo Lista / Grid
     listBtn?.addEventListener('click', () => {
       container.className = "group flex flex-col gap-3 relative z-10 transition-all duration-500";
       listBtn.classList.add('bg-white/10', 'text-white');
@@ -197,6 +151,18 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
       gridBtn.classList.add('bg-white/10', 'text-white');
       listBtn?.classList.remove('bg-white/10', 'text-white');
     });
+
+    // Animación de aparición (Reveal)
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    container.querySelectorAll('.event-card').forEach(card => observer.observe(card));
   }
 
   init();
