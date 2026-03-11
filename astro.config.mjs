@@ -1,19 +1,14 @@
-// @ts-check
-// @ts-check
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
-import vercel from '@astrojs/vercel/serverless';
+import netlify from '@astrojs/netlify';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   site: 'https://calendarium.tech',
   output: 'server',
-  integrations: [
-    react(),
-    sitemap()
-  ],
-  adapter: vercel(),
+  integrations: [react(), sitemap()],
+  adapter: netlify(),
   vite: {
     plugins: [tailwindcss()]
   }
