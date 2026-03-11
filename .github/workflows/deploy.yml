@@ -26,6 +26,9 @@ jobs:
           PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
 
+      - name: Fix _redirects for SSR function
+        run: echo "/* /.netlify/functions/ssr 200" > dist/_redirects
+
       - name: Deploy to Netlify
         run: npx netlify-cli deploy --dir=dist --functions=.netlify/v1/functions --prod
         env:
