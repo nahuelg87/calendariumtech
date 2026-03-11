@@ -18,8 +18,16 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Build Astro Project
+        run: npm run build
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+
       - name: Deploy to Netlify
-        run: npx netlify-cli deploy --build --prod
+        run: npx netlify-cli deploy --dir=dist --functions=.netlify/v1/functions --prod
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
