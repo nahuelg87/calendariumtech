@@ -3,11 +3,11 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
+  "dev": "astro dev",
+  "build": "astro build && echo '/* /.netlify/functions/ssr 200' > dist/_redirects",
+  "preview": "astro preview",
+  "astro": "astro"
+},
   "dependencies": {
     "@astrojs/check": "^0.9.7",
     "@astrojs/netlify": "^6.6.4",
