@@ -38,15 +38,16 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
 ---
 
 <MainLayout title="Eventos Tech">
-  <section class="flex flex-col md:flex-row items-center justify-center pt-6 pb-8 gap-4 md:gap-12">
-    <h1 class="text-4xl md:text-7xl lg:text-8xl font-black italic uppercase tracking-tighter leading-none text-center md:text-left text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">
-      Calendarium<span class="text-yellow-400">.tech</span>
-    </h1>
-    
-    <div class="w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
-      <Hero3D client:load />
-    </div>
-  </section>
+  <section class="flex flex-col md:flex-row items-center justify-center pt-6 pb-8 gap-2 md:gap-4 w-full max-w-full overflow-hidden px-4">
+  
+  <h1 class="text-[clamp(1.5rem,7.5vw,5.5rem)] font-black italic uppercase tracking-tighter leading-none text-center md:text-left text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.5)] whitespace-nowrap">
+    Calendarium<span class="text-yellow-400">.tech</span>
+  </h1>
+  
+  <div class="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 flex items-center justify-center shrink-0">
+    <Hero3D client:load />
+  </div>
+</section>
 
   <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
 
@@ -165,21 +166,20 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
         
         allCards.forEach(card => {
           const htmlCard = card as HTMLElement;
-          const gridItem = htmlCard.closest('.scroll-mt-28') as HTMLElement; // El contenedor real en el grid
+          const gridItem = htmlCard.closest('.scroll-mt-28') as HTMLElement;
           
           const cardTracksStr = htmlCard.getAttribute('data-card-track') || "";
           const tracksArray = cardTracksStr.split(' ');
 
           if (selectedTrack === 'all' || tracksArray.includes(selectedTrack || "")) {
-            if (gridItem) gridItem.style.display = 'block'; // Mostramos el contenedor
+            if (gridItem) gridItem.style.display = 'block'; 
             htmlCard.style.display = 'flex';
             setTimeout(() => htmlCard.classList.add('active'), 10);
           } else {
-            if (gridItem) gridItem.style.display = 'none'; // Ocultamos el contenedor para reordenar grid
+            if (gridItem) gridItem.style.display = 'none';
           }
         });
 
-        // Cerrar sidebar y resetear overlay (Limpieza total)
         sidebar.classList.add('translate-x-full');
         overlay.classList.add('opacity-0', 'pointer-events-none');
         overlay.classList.remove('opacity-100', 'pointer-events-auto');

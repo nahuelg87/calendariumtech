@@ -2,58 +2,55 @@
 // src/components/Footer.astro
 const year = new Date().getFullYear();
 ---
-<footer class="w-full py-10 mt-auto border-t border-white/5 bg-black/20 backdrop-blur-md">
-  <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+<footer id="footer" class="w-full py-12 mt-auto border-t border-white/5 bg-black/20 backdrop-blur-md">
+  <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-10">
     
-    <div class="text-center md:text-left">
+    <div class="text-center md:text-left order-2 md:order-1">
       <div class="flex items-center justify-center md:justify-start gap-2">
-        <p class="text-white/40 text-xs font-mono uppercase tracking-[0.3em]">
-          &copy; {year} Calendarium<span class="text-yellow-400">.tech</span>
-        </p>
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400/60">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
+        <span class="text-white font-black italic uppercase tracking-tighter text-base">
+          Calendarium<span class="text-yellow-400">.tech</span>
+        </span>
+        <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
       </div>
-      <p class="text-white/20 text-[10px] mt-2 italic font-light">
-        Curado por <span class="text-white/40 hover:text-white transition-colors cursor-default">Nahuel</span> para la comunidad tech
+      
+      <p class="text-white/60 text-[10px] mt-2 italic font-light uppercase tracking-[0.2em] leading-relaxed">
+        Curado por 
+        <a 
+          href="https://www.linkedin.com/in/nahuelgenari/" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="text-yellow-400/80 hover:text-yellow-400 transition-all border-b border-transparent hover:border-yellow-400/30 font-bold"
+        >
+          Nahuel
+        </a> 
+        para la comunidad tech {year}
       </p>
     </div>
     
-    <div class="flex flex-col items-center md:items-end gap-4">
-      <div class="flex gap-6">
-        <a href="#" class="text-white/40 hover:text-yellow-400 transition-colors text-[10px] uppercase font-black italic tracking-widest">Contacto</a>
-        <a href="#" class="text-white/40 hover:text-yellow-400 transition-colors text-[10px] uppercase font-black italic tracking-widest">Sumar Evento</a>
-      </div>
-
-      <div class="flex gap-5 items-center">
-        <a href="#" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="GitHub">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+    <div class="flex flex-col items-center md:items-end gap-6 order-1 md:order-2">
+      <div class="flex gap-6 items-center bg-white/5 px-6 py-3 rounded-full border border-white/5">
+        <a href="https://www.linkedin.com/in/nahuel-genaro" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="LinkedIn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
         </a>
 
-        <a href="#" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="X">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932 6.064-6.932zm-1.292 19.494h2.039L6.486 3.24H4.298l13.311 17.407z"></path>
-          </svg>
+        <a href="https://www.tiktok.com/@tu_usuario" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="TikTok">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
         </a>
 
-        <a href="#" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="LinkedIn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+        <a href="https://instagram.com/tu_usuario" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
         </a>
 
-        <a href="#" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="TikTok">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
-          </svg>
+        <a href="https://github.com/tu-usuario/calendariumtech" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
         </a>
 
-        <a href="#" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="Instagram">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-        </a>
+        <a href="https://x.com/tu_usuario" target="_blank" class="text-white/20 hover:text-white transition-all transform hover:scale-110" aria-label="X">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932L18.901 1.153zM17.61 20.644h2.039L6.486 3.24H4.298L17.61 20.644z"></path>
+  </svg>
+</a>
       </div>
     </div> 
-
   </div>
 </footer>
