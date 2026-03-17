@@ -1,0 +1,99 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Contacto" description="Contactate con el administrador de Calendarium.tech">
+  <div class="max-w-2xl mx-auto py-8 px-4">
+    
+    <div class="mb-12 text-center md:text-left">
+      <h1 class="text-4xl font-black italic uppercase tracking-tighter text-white mb-4">
+        Canal de <span class="text-yellow-400">Contacto</span>
+      </h1>
+      <p class="text-white/60 text-sm uppercase tracking-widest font-bold">
+        ¿Dudas, sugerencias o feedback? Enviá tu mensaje al búnker.
+      </p>
+    </div>
+
+    <form id="contact-form" class="space-y-6 bg-white/5 p-8 rounded-2xl border border-white/10 backdrop-blur-sm">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <label class="text-[10px] uppercase font-black tracking-widest text-yellow-400/80">Nombre</label>
+          <input type="text" name="name" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-yellow-400/50 outline-none transition-all" required />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-[10px] uppercase font-black tracking-widest text-yellow-400/80">Tu Email</label>
+          <input type="email" name="email" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-yellow-400/50 outline-none transition-all" required />
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] uppercase font-black tracking-widest text-yellow-400/80">Asunto</label>
+        <input type="text" name="subject" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-yellow-400/50 outline-none transition-all" required placeholder="¿Sobre qué querés hablar?" />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] uppercase font-black tracking-widest text-yellow-400/80">Mensaje</label>
+        <textarea name="message" rows="5" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-yellow-400/50 outline-none transition-all resize-none" required></textarea>
+      </div>
+
+      <div class="hidden" aria-hidden="true">
+        <input type="text" name="bunker_trap" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <button type="submit" class="w-full py-4 bg-yellow-400 text-black font-black uppercase italic tracking-widest rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95">
+        Enviar Mensaje
+      </button>
+    </form>
+
+  </div>
+
+  <script>
+    import { supabase } from '../lib/supabase';
+
+    function setupContactForm() {
+      const form = document.getElementById('contact-form') as HTMLFormElement;
+      if (!form) return;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        
+        if (formData.get('bunker_trap')) return;
+
+        const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Transmitiendo...';
+
+        const { error } = await supabase.from('inbox').insert([{
+          name: formData.get('name'),
+          email: formData.get('email'),
+          subject: formData.get('subject'),
+          message: formData.get('message')
+        }]);
+
+        if (!error) {
+          form.innerHTML = `
+            <div class="text-center py-12 animate-in fade-in zoom-in duration-500">
+              <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-400/40">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </div>
+              <h2 class="text-2xl font-black italic uppercase text-white">¡Mensaje Transmitido!</h2>
+              <p class="text-white/60 text-sm uppercase tracking-widest mt-2">Gracias por contactarte. Te responderé pronto.</p>
+              <a href="/" class="inline-block mt-8 text-[10px] font-black uppercase tracking-widest text-yellow-400 border-b border-yellow-400/20 hover:border-yellow-400 transition-all">Regresar a la terminal</a>
+            </div>
+          `;
+        } else {
+          alert('Error en la comunicación. Intentá nuevamente.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Enviar Mensaje';
+        }
+      });
+    }
+
+    setupContactForm();
+    document.addEventListener('astro:after-swap', setupContactForm);
+    document.addEventListener('astro:page-load', setupContactForm);
+  </script>
+</MainLayout>
