@@ -2,16 +2,21 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import { supabase } from '../lib/supabase';
 
-// 1. Consultamos los tracks únicos directamente desde la base de datos
-const { data: events, error: fetchError } = await supabase
-    .from('events')
-    .select('category');
+// 1. Traemos los tracks directamente de la tabla maestra 'tracks'
+const { data: tracksData, error: fetchError } = await supabase
+    .from('tracks')
+    .select('name')
+    .order('name', { ascending: true });
 
-// 2. Procesamos los datos para tener una lista limpia de nombres únicos
-const allTracks = events ? [...new Set(events.map(event => event.category))].sort() : [];
+// 2. Procesamos para tener un array simple de strings
+// Si falla o está vacío, ponemos 'General' como fallback de seguridad
+const tracks = tracksData && tracksData.length > 0 
+    ? tracksData.map(t => t.name) 
+    : ['General'];
 
-// 3. Fallback técnico: Si la DB está vacía o hay error, mostramos General
-const tracks = allTracks.length > 0 ? allTracks : ['General'];
+if (fetchError) {
+    console.error("Error recuperando tracks:", fetchError.message);
+}
 ---
 
 <MainLayout title="Recibir Alertas" description="Configurá tus preferencias para no perderte ningún evento tech.">
@@ -65,26 +70,26 @@ const tracks = allTracks.length > 0 ? allTracks : ['General'];
       </div>
 
       <div class="space-y-4">
-  <label for="frequency" class="text-[10px] uppercase font-black tracking-[0.2em] text-yellow-400/80 ml-1">
-    Frecuencia de Alerta
-  </label>
-  
-  <div class="relative">
-    <select 
-      id="frequency"
-      name="frequency"
-      class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white/80 text-xs font-bold uppercase tracking-widest appearance-none focus:border-yellow-400/50 transition-all cursor-pointer"
-    >
-      <option value="daily">Diario (Reporte de mañana)</option>
-      <option value="weekly" selected>Semanal (Cada Lunes)</option>
-      <option value="monthly">Solo Eventos del Mes</option>
-    </select>
-    
-    <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 text-xs">
-       ▼
-    </div>
-  </div>
-</div>
+        <label for="frequency" class="text-[10px] uppercase font-black tracking-[0.2em] text-yellow-400/80 ml-1">
+          Frecuencia de Alerta
+        </label>
+        
+        <div class="relative">
+          <select 
+            id="frequency"
+            name="frequency"
+            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white/80 text-xs font-bold uppercase tracking-widest appearance-none focus:border-yellow-400/50 transition-all cursor-pointer"
+          >
+            <option value="diario">Diario (si hay novedades)</option>
+            <option value="semanal" selected>Semanal (Cada Lunes)</option>
+            <option value="quincenal">Quincenal (Cada 15 días)</option>
+          </select>
+          
+          <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 text-xs">
+             ▼
+          </div>
+        </div>
+      </div>
 
       <div class="hidden" aria-hidden="true">
         <input type="text" name="bunker_trap" tabindex="-1" autocomplete="off" />
@@ -172,6 +177,7 @@ const tracks = allTracks.length > 0 ? allTracks : ['General'];
       });
     }
 
+    // Aseguramos la carga en todos los ciclos de vida de Astro
     setupSubscriptionForm();
     document.addEventListener('astro:after-swap', setupSubscriptionForm);
     document.addEventListener('astro:page-load', setupSubscriptionForm);
