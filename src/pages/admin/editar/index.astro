@@ -1,0 +1,154 @@
+---
+export const prerender = true;
+import MainLayout from "../../../layouts/MainLayout.astro";
+import { supabase } from "../../../lib/supabase";
+
+// Traemos los tracks para los selectores (esto se genera en el build)
+const { data: allTracks } = await supabase
+  .from('tracks')
+  .select('name')
+  .order('name', { ascending: true });
+---
+
+<MainLayout title="Editar Evento">
+  <section class="max-w-4xl mx-auto p-6">
+    <a href="/admin" class="text-white/30 hover:text-[#facc15] text-xs font-bold uppercase tracking-widest mb-8 inline-block">← Cancelar y volver</a>
+    
+    <div id="loading-state" class="text-white font-mono text-center py-20 animate-pulse">
+      SINCRONIZANDO CON EL BÚNKAR...
+    </div>
+
+    <div id="edit-form-container" class="hidden bg-[#111] border border-white/10 p-10 rounded-3xl shadow-2xl">
+      <header class="mb-10">
+        <h1 class="text-3xl font-black italic text-white">EDITAR <span class="text-[#facc15]">EVENTO</span></h1>
+        <p id="event-id-display" class="text-white/30 text-[10px] mt-2 font-mono uppercase"></p>
+      </header>
+
+      <form id="edit-event-form" class="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <input type="hidden" name="id" id="field-id" />
+        
+        <div class="md:col-span-6">
+          <label class="label-tech">Nombre del Evento</label>
+          <input type="text" name="title" id="field-title" required class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Fecha</label>
+          <input type="date" name="date" id="field-date" required class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Ubicación</label>
+          <input type="text" name="location" id="field-location" required class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Imagen (URL)</label>
+          <input type="url" name="imageUrl" id="field-imageUrl" required class="input-tech" />
+        </div>
+
+        <div class="md:col-span-3">
+          <label class="label-tech">Link Registro</label>
+          <input type="url" name="linkUrl" id="field-linkUrl" class="input-tech" />
+        </div>
+
+        <div class="md:col-span-6 flex items-center gap-3 py-4 border-y border-white/5">
+          <input type="checkbox" name="is_featured" id="field-featured" class="w-5 h-5 accent-[#facc15]" />
+          <label for="field-featured" class="text-white font-bold cursor-pointer italic uppercase text-xs tracking-widest">Destacar en Home</label>
+        </div>
+
+        <button type="submit" id="submit-btn" class="md:col-span-6 bg-cyan-500 text-black font-black uppercase italic py-4 rounded-xl hover:bg-white transition-all">
+          GUARDAR CAMBIOS
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <script>
+    import { supabase } from "../../../lib/supabase";
+
+    const loading = document.getElementById('loading-state');
+    const container = document.getElementById('edit-form-container');
+    const form = document.getElementById('edit-event-form') as HTMLFormElement;
+    const btn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+    // 1. Obtener ID de la URL (?id=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+
+    async function loadEventData() {
+      if (!eventId) {
+        alert("No se proporcionó ID de evento");
+        window.location.href = '/admin';
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (error || !data) {
+        alert("Evento no encontrado");
+        window.location.href = '/admin';
+        return;
+      }
+
+      // 2. Llenar el formulario
+      (document.getElementById('field-id') as HTMLInputElement).value = data.id;
+      (document.getElementById('field-title') as HTMLInputElement).value = data.title;
+      (document.getElementById('field-date') as HTMLInputElement).value = data.date;
+      (document.getElementById('field-location') as HTMLInputElement).value = data.location;
+      (document.getElementById('field-imageUrl') as HTMLInputElement).value = data.image_url;
+      (document.getElementById('field-linkUrl') as HTMLInputElement).value = data.link_url || '';
+      (document.getElementById('field-featured') as HTMLInputElement).checked = data.is_featured;
+      
+      document.getElementById('event-id-display')!.innerText = `UUID: ${data.id}`;
+
+      // Mostrar formulario
+      loading?.classList.add('hidden');
+      container?.classList.remove('hidden');
+    }
+
+    loadEventData();
+
+    // 3. Manejar el Update
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      btn.innerText = "ACTUALIZANDO...";
+
+      const formData = new FormData(form);
+      
+      try {
+        const { error } = await supabase
+          .from('events')
+          .update({
+            title: formData.get('title'),
+            date: formData.get('date'),
+            location: formData.get('location'),
+            image_url: formData.get('imageUrl'),
+            link_url: formData.get('linkUrl'),
+            is_featured: formData.get('is_featured') === 'on'
+          })
+          .eq('id', eventId);
+
+        if (error) throw error;
+
+        alert("Evento actualizado con éxito.");
+        window.location.href = '/admin';
+      } catch (err: any) {
+        alert("Error: " + err.message);
+        btn.disabled = false;
+        btn.innerText = "GUARDAR CAMBIOS";
+      }
+    });
+  </script>
+</MainLayout>
+
+<style>
+  @reference "../../../styles/global.css";
+  .label-tech { @apply block text-[10px] font-bold uppercase tracking-[0.2em] text-[#22d3ee] mb-2; }
+  .input-tech { @apply w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#facc15] outline-none transition-all; }
+</style>

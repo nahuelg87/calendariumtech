@@ -1,9 +1,9 @@
 ---
-export const prerender = false;
+export const prerender = true;
 import MainLayout from "../../layouts/MainLayout.astro";
-import { supabase } from "../../lib/supabase"; // Importamos el cliente
+import { supabase } from "../../lib/supabase";
 
-// Traemos los tracks directamente de tu DB para que coincidan al 100%
+// Traemos los tracks en el build para los selectores
 const { data: allTracks } = await supabase
   .from('tracks')
   .select('name')
@@ -20,7 +20,7 @@ const { data: allTracks } = await supabase
         <p class="text-white/30 text-sm mt-2 font-mono uppercase tracking-tighter">Multi-track System Active</p>
       </header>
 
-      <form action="/api/events/create" method="post" class="grid grid-cols-1 md:grid-cols-6 gap-6">
+      <form id="create-event-form" class="grid grid-cols-1 md:grid-cols-6 gap-6">
         <div class="md:col-span-6">
           <label class="label-tech">Nombre del Evento</label>
           <input type="text" name="title" required placeholder="Ej: Nerdearla 2026" class="input-tech" />
@@ -81,16 +81,80 @@ const { data: allTracks } = await supabase
           <label for="featured" class="text-white font-bold cursor-pointer italic uppercase text-xs tracking-widest">¿Destacar en Home?</label>
         </div>
 
-        <button type="submit" class="md:col-span-6 bg-[#facc15] text-black font-black uppercase italic py-4 rounded-xl hover:bg-white transition-all shadow-[0_0_30px_rgba(250,204,21,0.2)]">
+        <button type="submit" id="submit-btn" class="md:col-span-6 bg-[#facc15] text-black font-black uppercase italic py-4 rounded-xl hover:bg-white transition-all shadow-[0_0_30px_rgba(250,204,21,0.2)]">
           Publicar en Calendarium.tech
         </button>
       </form>
     </div>
   </section>
+
+  <script>
+    import { supabase } from "../../lib/supabase";
+
+    const form = document.getElementById('create-event-form') as HTMLFormElement;
+    const btn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Feedback visual
+      btn.disabled = true;
+      btn.innerText = "PROCESANDO...";
+
+      const formData = new FormData(form);
+      
+      try {
+        // 1. Insertar el evento principal
+        const { data: newEvent, error: eventError } = await supabase
+          .from('events')
+          .insert({
+            title: formData.get('title'),
+            date: formData.get('date'),
+            location: formData.get('location'),
+            image_url: formData.get('imageUrl'),
+            link_url: formData.get('linkUrl'),
+            is_featured: formData.get('is_featured') === 'on'
+          })
+          .select()
+          .single();
+
+        if (eventError) throw eventError;
+
+        // 2. Insertar los tracks en event_tags
+        const selectedTracks = [
+          formData.get('track_1'),
+          formData.get('track_2'),
+          formData.get('track_3')
+        ].filter(t => t && t !== "");
+
+        if (selectedTracks.length > 0) {
+          const tagsToInsert = selectedTracks.map(trackName => ({
+            event_id: newEvent.id,
+            track_name: trackName
+          }));
+
+          const { error: tagsError } = await supabase
+            .from('event_tags')
+            .insert(tagsToInsert);
+            
+          if (tagsError) throw tagsError;
+        }
+
+        alert("¡Misión cumplida! Evento creado correctamente.");
+        window.location.href = '/admin';
+
+      } catch (err: any) {
+        console.error("Error al crear:", err);
+        alert("Fallo en el sistema: " + err.message);
+        btn.disabled = false;
+        btn.innerText = "Publicar en Calendarium.tech";
+      }
+    });
+  </script>
 </MainLayout>
 
 <style>
-  @reference "tailwindcss"; 
+  @reference "../../styles/global.css"; 
 
   .label-tech { 
     @apply block text-[10px] font-bold uppercase tracking-[0.2em] text-[#22d3ee] mb-2; 

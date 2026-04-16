@@ -4,13 +4,13 @@ import EventCard from '../components/EventCard.astro';
 import Hero3D from '../components/Hero3D.jsx';
 import { supabase } from '../lib/supabase';
 
-// 1. Traemos los Tracks (para los filtros de la interfaz)
+// 1. Traemos los Tracks para los filtros
 const { data: tracks } = await supabase
   .from('tracks')
   .select('name')
   .order('name', { ascending: true });
 
-// 2. Traemos los Eventos con sus Tags (Relación Many-to-Many)
+// 2. Traemos los Eventos (Data inicial para el Build/SEO)
 const { data: events, error } = await supabase
   .from('events')
   .select(`
@@ -25,29 +25,26 @@ const { data: events, error } = await supabase
 if (error) {
   console.error("Error de SysAdmin en Supabase:", error.message);
 }
+console.log("EVENTOS DESDE SUPABASE:", events);
 
-// --- LÓGICA DE ORDENAMIENTO (SOLO EVENTOS FINALIZADOS AL FINAL) ---
+
 const hoy = new Date();
 hoy.setHours(0, 0, 0, 0);
 
 const upcomingEvents = events?.filter(e => new Date(e.date + 'T00:00:00') >= hoy) || [];
 const pastEvents = events?.filter(e => new Date(e.date + 'T00:00:00') < hoy) || [];
-
-// Unimos las listas: Primero los que vienen, luego los que pasaron
 const sortedEvents = [...upcomingEvents, ...pastEvents];
 ---
 
 <MainLayout title="Eventos Tech">
   <section class="flex flex-col md:flex-row items-center justify-center pt-6 pb-8 gap-2 md:gap-4 w-full max-w-full overflow-hidden px-4">
-  
-  <h1 class="text-[clamp(1.5rem,7.5vw,5.5rem)] font-black italic uppercase tracking-tighter leading-none text-center md:text-left text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.5)] whitespace-nowrap">
-    Calendarium<span class="text-yellow-400">.tech</span>
-  </h1>
-  
-  <div class="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 flex items-center justify-center shrink-0">
-    <Hero3D client:load />
-  </div>
-</section>
+    <h1 class="text-[clamp(1.5rem,7.5vw,5.5rem)] font-black italic uppercase tracking-tighter leading-none text-center md:text-left text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.5)] whitespace-nowrap">
+      Calendarium<span class="text-yellow-400">.tech</span>
+    </h1>
+    <div class="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 flex items-center justify-center shrink-0">
+      <Hero3D client:load />
+    </div>
+  </section>
 
   <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
 
@@ -92,15 +89,11 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
   
   <main id="events-container" class="group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500">
     {sortedEvents.map(event => {
-      const eventId = event.title
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") 
-        .replace(/\s+/g, '-') 
-        .replace(/[^\w\-]+/g, '');
+      // Generamos un ID único basado en el título para evitar duplicados en el JS
+      const eventId = "ev-" + event.id;
 
       return (
-        <div id={eventId} class="scroll-mt-28 transition-all duration-500"> 
+        <div id={eventId} class="event-wrapper scroll-mt-28 transition-all duration-500"> 
           <EventCard 
             title={event.title}
             date={event.date}
@@ -117,6 +110,37 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
 </MainLayout>
 
 <script>
+  import { supabase } from '../lib/supabase';
+
+  async function refreshEvents() {
+    const container = document.getElementById('events-container');
+    if (!container) return;
+
+    // 1. Pedimos a Supabase los últimos eventos en vivo
+    const { data: freshEvents, error } = await supabase
+      .from('events')
+      .select(`*, event_tags ( track_name )`)
+      .order('is_featured', { ascending: false })
+      .order('date', { ascending: true });
+
+    if (error || !freshEvents) return;
+
+    // 2. Filtramos: ¿Cuáles de estos NO están ya en el HTML?
+    freshEvents.forEach(event => {
+      const existing = document.getElementById("ev-" + event.id);
+      
+      if (!existing) {
+        // El evento es nuevo (no estaba en el build)
+        // Creamos el HTML dinámicamente o podrías recargar la lista entera.
+        // Para no complicar con templates, lo más sano es insertar un mensaje o recargar suave.
+        // Por ahora, simplemente refrescamos si hay discrepancia para asegurar consistencia
+        console.log("Detectado evento nuevo en el búnker. Sincronizando...");
+        location.reload(); 
+        // Nota: En una versión Pro usaríamos un componente de React/Svelte para inyectar sin recargar
+      }
+    });
+  }
+
   function init() {
     const container = document.getElementById('events-container');
     const sidebar = document.getElementById('filter-sidebar');
@@ -128,6 +152,7 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
     
     if (!container || !sidebar || !overlay) return;
 
+    // --- LÓGICA DE FILTROS Y UI (TU CÓDIGO ACTUAL) ---
     const toggleSidebar = (e: Event) => {
       if (e) e.preventDefault();
       const isOpen = !sidebar.classList.contains('translate-x-full');
@@ -146,6 +171,7 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
     closeBtn?.addEventListener('click', toggleSidebar);
     overlay?.addEventListener('click', toggleSidebar);
 
+    // Re-ejecutar observer para las tarjetas (animaciones)
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -155,37 +181,30 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
       });
     }, { threshold: 0.1 });
 
-    const allCards = container.querySelectorAll('.event-card');
-    allCards.forEach(card => observer.observe(card));
+    container.querySelectorAll('.event-card').forEach(card => observer.observe(card));
 
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    
-    filterButtons.forEach(btn => {
+    // Filtrado por Tracks
+    document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const selectedTrack = btn.getAttribute('data-track');
-        
-        allCards.forEach(card => {
+        container.querySelectorAll('.event-card').forEach(card => {
           const htmlCard = card as HTMLElement;
-          const gridItem = htmlCard.closest('.scroll-mt-28') as HTMLElement;
-          
+          const gridItem = htmlCard.closest('.event-wrapper') as HTMLElement;
           const cardTracksStr = htmlCard.getAttribute('data-card-track') || "";
           const tracksArray = cardTracksStr.split(' ');
 
           if (selectedTrack === 'all' || tracksArray.includes(selectedTrack || "")) {
             if (gridItem) gridItem.style.display = 'block'; 
             htmlCard.style.display = 'flex';
-            setTimeout(() => htmlCard.classList.add('active'), 10);
           } else {
             if (gridItem) gridItem.style.display = 'none';
           }
         });
-
-        sidebar.classList.add('translate-x-full');
-        overlay.classList.add('opacity-0', 'pointer-events-none');
-        overlay.classList.remove('opacity-100', 'pointer-events-auto');
+        toggleSidebar(new Event('click'));
       });
     });
 
+    // Cambio de Vista
     listBtn?.addEventListener('click', () => {
       container.className = "group flex flex-col gap-3 relative z-10 transition-all duration-500";
       listBtn.classList.add('bg-white/10', 'text-white');
@@ -197,6 +216,9 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
       gridBtn.classList.add('bg-white/10', 'text-white');
       listBtn?.classList.remove('bg-white/10', 'text-white');
     });
+
+    // LLAMADA AL REFRESH (Opción B)
+    refreshEvents();
   }
 
   init();
