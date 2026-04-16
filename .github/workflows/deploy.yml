@@ -2,7 +2,7 @@ name: Deploy Calendarium Bunker
 
 on:
   push:
-    branches: [ main ] # Se dispara cuando subís a la rama main
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -10,10 +10,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Actualizado a v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # Actualizado a v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -33,6 +33,8 @@ jobs:
           source: "dist/*,package.json"
           target: "/root/calendarium-bunker"
           strip_components: 0
+          # Agregamos esto para evitar errores de conexión inicial
+          overwrite: true 
 
       - name: Restart PM2
         uses: appleboy/ssh-action@master
