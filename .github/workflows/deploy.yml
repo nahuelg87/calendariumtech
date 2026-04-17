@@ -1,51 +1,34 @@
-name: Deploy Calendarium Bunker
+name: Deploy Calendarium 🚀
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ] # Se dispara al pushear a main
 
 jobs:
-  deploy:
+  build_and_deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4 # Actualizado a v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4 # Actualizado a v4
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build project
+      - name: Build Astro 🏗️
         run: npm run build
         env:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
 
-      - name: Deploy to Droplet
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/*,package.json"
-          target: "/root/calendarium-bunker"
-          strip_components: 0
-          # Agregamos esto para evitar errores de conexión inicial
-          overwrite: true 
+      # OPCIÓN A: Si usas GitHub Pages o similar
+      # - name: Deploy to GitHub Pages
+      #   uses: withastro/action@v2
 
-      - name: Restart PM2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /root/calendarium-bunker
-            npm install --production
-            pm2 restart calendarium-app || pm2 start dist/server/entry.mjs --name calendarium-app
+      # OPCIÓN B: Si usas un VPS (vía SSH / FTP)
+      # Aquí configurarías el rsync o el comando para subir los archivos a tu búnker
