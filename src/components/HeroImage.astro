@@ -1,0 +1,16 @@
+---
+// src/components/HeroImage.astro
+import { Image } from 'astro:assets';
+import logoImg from '../assets/logo.png'; 
+---
+
+<div class="relative flex items-center justify-center w-full max-w-full">
+  <div class="absolute inset-0 bg-yellow-400 rounded-full blur-3xl opacity-10"></div>
+  
+  <Image 
+    src={logoImg} 
+    alt="Calendarium Tech Logo" 
+    class="relative z-10 w-full h-auto max-w-[200px] sm:max-w-[280px] md:max-w-[350px] lg:max-w-[380px] object-contain drop-shadow-[0_0_15px_rgba(255,223,0,0.5)] mix-blend-screen"
+    loading="eager" 
+  />
+</div>

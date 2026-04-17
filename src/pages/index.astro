@@ -1,8 +1,11 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import EventCard from '../components/EventCard.astro';
-import Hero3D from '../components/Hero3D.jsx';
+import HeroImage from '../components/HeroImage.astro'; 
 import { supabase } from '../lib/supabase';
+
+const mostrarBanner = false; // Cambialo a true cuando tengas el sponsor
+
 
 // 1. Traemos los Tracks para los filtros
 const { data: tracks } = await supabase
@@ -10,7 +13,7 @@ const { data: tracks } = await supabase
   .select('name')
   .order('name', { ascending: true });
 
-// 2. Traemos los Eventos (Data inicial para el Build/SEO)
+// 2. Traemos los Eventos (SSR)
 const { data: events, error } = await supabase
   .from('events')
   .select(`
@@ -25,9 +28,7 @@ const { data: events, error } = await supabase
 if (error) {
   console.error("Error de SysAdmin en Supabase:", error.message);
 }
-console.log("EVENTOS DESDE SUPABASE:", events);
 
-    
 const hoy = new Date();
 hoy.setHours(0, 0, 0, 0);
 
@@ -37,47 +38,82 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
 ---
 
 <MainLayout title="Eventos Tech">
-  <section class="flex flex-col md:flex-row items-center justify-center pt-6 pb-8 gap-2 md:gap-4 w-full max-w-full overflow-hidden px-4">
-    <h1 class="text-[clamp(1.5rem,7.5vw,5.5rem)] font-black italic uppercase tracking-tighter leading-none text-center md:text-left text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.5)] whitespace-nowrap">
-      Calendarium<span class="text-yellow-400">.tech</span>
-    </h1>
-    <div class="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 flex items-center justify-center shrink-0">
-      <Hero3D client:load />
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    {mostrarBanner && (
+    <div class="pt-8 w-full flex justify-center">
+      <div class="w-full h-[90px] bg-white/5 border border-dashed border-white/20 rounded-xl flex items-center justify-center text-[10px] uppercase tracking-[0.3em] text-white/20">
+        Espacio Publicitario Reservado
+      </div>
     </div>
-  </section>
+    )}
 
-  <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
+    <section class="relative pt-16 md:pt-24 pb-12 overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 items-center justify-items-center lg:justify-items-start">
+        <div class="w-full">
+          <h1 class="text-[clamp(2.5rem,9vw,5.5rem)] font-black italic uppercase tracking-tighter leading-[0.8] text-center lg:text-left text-white drop-shadow-[0_0_25px_rgba(34,211,238,0.3)]">
+            Calendarium<span class="text-yellow-400">.tech</span>
+          </h1>
+        </div>
+        
+        <div class="w-full max-w-[250px] sm:max-w-[300px] md:max-w-[350px] lg:max-w-full flex justify-center lg:justify-end">
+           <HeroImage />
+        </div>
+      </div>
+    </section>
 
-  <nav class="flex justify-center md:justify-between items-center mb-8 gap-8">
-    <button id="open-filters" class="group flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full hover:bg-white hover:text-black transition-all duration-500 text-xs font-black uppercase italic tracking-[0.2em] relative z-20">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 3H2l8 9v7l4 3v-10L22 3z"/></svg>
-      Filtros
-    </button>
+    <div class="w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-10"></div>
 
-    <div class="hidden md:flex bg-white/[0.03] p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
-      <button id="grid-btn" class="p-4 bg-white/10 rounded-xl text-white shadow-2xl">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <nav class="flex justify-center md:justify-between items-center mb-10 gap-8">
+      <button id="open-filters" class="group flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full hover:bg-white hover:text-black transition-all duration-500 text-xs font-black uppercase italic tracking-[0.2em] relative z-20">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 3H2l8 9v7l4 3v-10L22 3z"/></svg>
+        Filtros
       </button>
-      <button id="list-btn" class="p-4 text-white/20 hover:text-white transition-all">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
-      </button>
-    </div>
-  </nav>
+
+      <div class="hidden md:flex bg-white/[0.03] p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
+        <button id="grid-btn" class="p-4 bg-white/10 rounded-xl text-white shadow-2xl">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </button>
+        <button id="list-btn" class="p-4 text-white/20 hover:text-white transition-all">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <main id="events-container" class="group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500 pb-20">
+      {sortedEvents.map(event => {
+        const eventId = "ev-" + event.id;
+        return (
+          <div id={eventId} class="event-wrapper scroll-mt-28 transition-all duration-500"> 
+            <EventCard 
+              title={event.title}
+              date={event.date}
+              event_tags={event.event_tags} 
+              location={event.location}
+              image_url={event.image_url} 
+              linkUrl={event.link_url}
+              is_featured={event.is_featured}
+            />
+          </div>
+        );
+      })}
+    </main>
+  </div>
 
   <aside id="filter-sidebar" class="fixed inset-y-0 right-0 w-72 bg-black/95 backdrop-blur-3xl border-l border-white/10 z-[200] translate-x-full transition-transform duration-500">
     <div class="p-8 h-full flex flex-col">
       <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-black italic uppercase tracking-tighter">Tracks</h2>
+        <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Tracks</h2>
         <button id="close-filters" class="p-2 hover:bg-white/10 rounded-full text-white">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
-      <div class="space-y-3">
-        <button class="filter-btn w-full text-left px-5 py-3 rounded-xl border border-white/20 bg-white/10 text-xs font-bold hover:border-white transition-all uppercase italic text-white" data-track="all">
+      <div class="space-y-3 overflow-y-auto">
+        <button class="filter-btn w-full text-left px-5 py-4 rounded-xl border border-white/20 bg-white/10 text-xs font-bold hover:border-white transition-all uppercase italic text-white" data-track="all">
           Todos los eventos
         </button>
         {tracks?.map(t => (
-          <button class="filter-btn w-full text-left px-5 py-3 rounded-xl border border-white/5 bg-white/5 text-xs font-bold hover:border-white transition-all uppercase italic text-white" data-track={t.name}>
+          <button class="filter-btn w-full text-left px-5 py-4 rounded-xl border border-white/5 bg-white/5 text-xs font-bold hover:border-white transition-all uppercase italic text-white" data-track={t.name}>
             {t.name}
           </button>
         ))}
@@ -86,61 +122,9 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
   </aside>
 
   <div id="sidebar-overlay" class="fixed inset-0 bg-black/80 opacity-0 pointer-events-none transition-opacity duration-500 z-[150]"></div>
-  
-  <main id="events-container" class="group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500">
-    {sortedEvents.map(event => {
-      // Generamos un ID único basado en el título para evitar duplicados en el JS
-      const eventId = "ev-" + event.id;
-
-      return (
-        <div id={eventId} class="event-wrapper scroll-mt-28 transition-all duration-500"> 
-          <EventCard 
-            title={event.title}
-            date={event.date}
-            event_tags={event.event_tags} 
-            location={event.location}
-            image_url={event.image_url} 
-            linkUrl={event.link_url}
-            is_featured={event.is_featured}
-          />
-        </div>
-      );
-    })}
-  </main>
 </MainLayout>
 
 <script>
-  import { supabase } from '../lib/supabase';
-
-  async function refreshEvents() {
-    const container = document.getElementById('events-container');
-    if (!container) return;
-
-    // 1. Pedimos a Supabase los últimos eventos en vivo
-    const { data: freshEvents, error } = await supabase
-      .from('events')
-      .select(`*, event_tags ( track_name )`)
-      .order('is_featured', { ascending: false })
-      .order('date', { ascending: true });
-
-    if (error || !freshEvents) return;
-
-    // 2. Filtramos: ¿Cuáles de estos NO están ya en el HTML?
-    freshEvents.forEach(event => {
-      const existing = document.getElementById("ev-" + event.id);
-      
-      if (!existing) {
-        // El evento es nuevo (no estaba en el build)
-        // Creamos el HTML dinámicamente o podrías recargar la lista entera.
-        // Para no complicar con templates, lo más sano es insertar un mensaje o recargar suave.
-        // Por ahora, simplemente refrescamos si hay discrepancia para asegurar consistencia
-        console.log("Detectado evento nuevo en el búnker. Sincronizando...");
-        location.reload(); 
-        // Nota: En una versión Pro usaríamos un componente de React/Svelte para inyectar sin recargar
-      }
-    });
-  }
-
   function init() {
     const container = document.getElementById('events-container');
     const sidebar = document.getElementById('filter-sidebar');
@@ -152,7 +136,6 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
     
     if (!container || !sidebar || !overlay) return;
 
-    // --- LÓGICA DE FILTROS Y UI (TU CÓDIGO ACTUAL) ---
     const toggleSidebar = (e: Event) => {
       if (e) e.preventDefault();
       const isOpen = !sidebar.classList.contains('translate-x-full');
@@ -171,7 +154,6 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
     closeBtn?.addEventListener('click', toggleSidebar);
     overlay?.addEventListener('click', toggleSidebar);
 
-    // Re-ejecutar observer para las tarjetas (animaciones)
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -183,7 +165,6 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
 
     container.querySelectorAll('.event-card').forEach(card => observer.observe(card));
 
-    // Filtrado por Tracks
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const selectedTrack = btn.getAttribute('data-track');
@@ -195,7 +176,6 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
 
           if (selectedTrack === 'all' || tracksArray.includes(selectedTrack || "")) {
             if (gridItem) gridItem.style.display = 'block'; 
-            htmlCard.style.display = 'flex';
           } else {
             if (gridItem) gridItem.style.display = 'none';
           }
@@ -204,21 +184,17 @@ const sortedEvents = [...upcomingEvents, ...pastEvents];
       });
     });
 
-    // Cambio de Vista
     listBtn?.addEventListener('click', () => {
-      container.className = "group flex flex-col gap-3 relative z-10 transition-all duration-500";
+      container.className = "group flex flex-col gap-3 relative z-10 transition-all duration-500 pb-20";
       listBtn.classList.add('bg-white/10', 'text-white');
       gridBtn?.classList.remove('bg-white/10', 'text-white');
     });
 
     gridBtn?.addEventListener('click', () => {
-      container.className = "group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500";
+      container.className = "group grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 relative z-10 transition-all duration-500 pb-20";
       gridBtn.classList.add('bg-white/10', 'text-white');
       listBtn?.classList.remove('bg-white/10', 'text-white');
     });
-
-    // LLAMADA AL REFRESH (Opción B)
-    refreshEvents();
   }
 
   init();
