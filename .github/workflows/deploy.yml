@@ -1,34 +1,52 @@
-name: Deploy Calendarium 🚀
+name: Deploy Calendarium Tech 🛰️
 
 on:
   push:
-    branches: [ main ] # Se dispara al pushear a main
+    branches: [ main ] # Se activa solo cuando mandás cambios a main
 
 jobs:
-  build_and_deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout del código 📂
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Instalación de Node.js 🟢
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Instalación de dependencias 🛠️
         run: npm install
 
-      - name: Build Astro 🏗️
+      - name: Build del Búnker (Astro) 🏗️
         run: npm run build
         env:
-          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          # Usamos exactamente los nombres que tenés en GitHub Secrets
+          PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
 
-      # OPCIÓN A: Si usas GitHub Pages o similar
-      # - name: Deploy to GitHub Pages
-      #   uses: withastro/action@v2
+      - name: Despliegue vía SSH al VPS 🚀
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/*"
+          target: "/var/www/html" # Tu ruta real confirmada por terminal
+          strip_components: 1
 
-      # OPCIÓN B: Si usas un VPS (vía SSH / FTP)
-      # Aquí configurarías el rsync o el comando para subir los archivos a tu búnker
+      - name: Limpieza y Reinicio de Nginx 🧹
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Borramos el archivo default de Nginx para que no pise tu web
+            rm -f /var/www/html/index.nginx-debian.html
+            # Aseguramos permisos para el servidor web
+            chown -R www-data:www-data /var/www/html
+            # Reiniciamos para aplicar cambios
+            systemctl restart nginx
