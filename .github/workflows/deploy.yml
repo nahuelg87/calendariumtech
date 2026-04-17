@@ -2,7 +2,7 @@ name: Deploy Calendarium Tech 🛰️
 
 on:
   push:
-    branches: [ main ] # Se activa solo cuando mandás cambios a main
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
@@ -15,38 +15,44 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Instalación de dependencias 🛠️
         run: npm install
 
-      - name: Build del Búnker (Astro) 🏗️
+      - name: Build del Búnker (Astro SSR) 🏗️
         run: npm run build
         env:
-          # Usamos exactamente los nombres que tenés en GitHub Secrets
           PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
 
-      - name: Despliegue vía SSH al VPS 🚀
+      - name: Despliegue de archivos al VPS 🚀
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/*"
-          target: "/var/www/html" # Tu ruta real confirmada por terminal
-          strip_components: 1
+          source: "dist/*,package.json,package-lock.json"
+          target: "/var/www/html"
+          rm: true # Esto limpia el index.nginx-debian.html y lo viejo
 
-      - name: Limpieza y Reinicio de Nginx 🧹
+      - name: Levantar el Servidor Node (PM2) 🛰️
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Borramos el archivo default de Nginx para que no pise tu web
-            rm -f /var/www/html/index.nginx-debian.html
-            # Aseguramos permisos para el servidor web
+            cd /var/www/html
+            npm install --production
+            
+            # Instalamos PM2 si no existe
+            if ! command -v pm2 &> /dev/null; then
+              npm install -g pm2
+            fi
+
+            # Reiniciamos el proceso para que cargue el logo nuevo y el SSR
+            pm2 restart calendarium || pm2 start dist/server/entry.mjs --name calendarium
+            
+            # Aseguramos permisos y reiniciamos Nginx
             chown -R www-data:www-data /var/www/html
-            # Reiniciamos para aplicar cambios
             systemctl restart nginx
